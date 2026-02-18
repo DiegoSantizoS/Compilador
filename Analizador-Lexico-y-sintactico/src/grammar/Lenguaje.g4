@@ -1,7 +1,7 @@
 grammar Lenguaje;
 
 /* =========================
-   PARSER RULES
+   REGLAS DE PARSER
 ========================= */
 
 programa
@@ -65,7 +65,7 @@ sentenciaBloque
 
 
 /* =========================
-   EXPRESIONES (precedencia)
+   EXPRESIONES
    De mayor a menor:
    1) () literales id leer
    2) unario: ! -
@@ -125,10 +125,10 @@ leer
 
 
 /* =========================
-   LEXER RULES
+   REGLAS DE LEXER
 ========================= */
 
-/* --- Palabras reservadas (español) --- */
+/* --- Palabras reservadas --- */
 SI        : 'si';
 SINO      : 'sino';
 MIENTRAS  : 'mientras';

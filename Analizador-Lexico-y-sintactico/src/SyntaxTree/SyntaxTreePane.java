@@ -1,14 +1,21 @@
 
 package SyntaxTree;
 
+import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.util.Arrays;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import org.antlr.v4.gui.TreeViewer;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import PRUEBA.*;
 /**
  *
  * @author carlos
@@ -18,8 +25,27 @@ public class SyntaxTreePane extends javax.swing.JPanel {
     /**
      * Creates new form SyntaxTreePane
      */
+    private JLabel titulo; 
     public SyntaxTreePane() {
         initComponents();
+        configurarUI();
+    }
+    
+    private void configurarUI() {
+        // Use BorderLayout like your other panels
+        setLayout(new BorderLayout(0, 0));
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        setBackground(new Color(41, 49, 52));
+        setOpaque(true);
+
+        titulo = new JLabel("Árbol Sintáctico");
+        titulo.setFont(new Font("Segoe UI", Font.PLAIN, 36));
+        titulo.setHorizontalAlignment(SwingConstants.CENTER);
+        titulo.setForeground(Color.WHITE);
+        titulo.setOpaque(false);
+
+        add(titulo, BorderLayout.NORTH);
     }
 
     /**
@@ -32,6 +58,7 @@ public class SyntaxTreePane extends javax.swing.JPanel {
     private void initComponents() {
 
         setBackground(new java.awt.Color(255, 255, 255));
+        setOpaque(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -44,34 +71,46 @@ public class SyntaxTreePane extends javax.swing.JPanel {
             .addGap(0, 481, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-private  void showTreeGui(LenguajeParser parser, ParseTree tree) {
-    Font letra = new Font("Segoe UI", Font.BOLD, 10);
+    public void showTreeGui(String codigo) {
+        CharStream input = CharStreams.fromString(codigo);
+        LenguajeLexer lexer = new LenguajeLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        LenguajeParser parser = new LenguajeParser(tokens);
 
-    // Limpiar el panel
-    this.removeAll();
-    this.setLayout(new BorderLayout());
+        ParseTree tree = parser.programa();
 
-    // Crear el TreeViewer
-    TreeViewer viewer = new TreeViewer(
-            Arrays.asList(parser.getRuleNames()),
-            tree
-    );
+        this.removeAll();
+        this.setLayout(new BorderLayout(0, 0));
+        this.setBackground(new Color(41, 49, 52));
+        this.setOpaque(true);
 
-    viewer.setScale(1.2);     // ajustable
-    viewer.setFont(letra);
+        if (titulo == null) {
+            titulo = new JLabel("Árbol Sintáctico");
+            titulo.setFont(new Font("Segoe UI", 0, 36));
+            Color titleColor = new Color(220, 209, 185);
+            titulo.setForeground(titleColor);
+            titulo.setHorizontalAlignment(SwingConstants.CENTER);
+            titulo.setOpaque(false);
+        }
+        this.add(titulo, BorderLayout.NORTH);
 
-    // Scroll para evitar recortes
-    JScrollPane scrollPane = new JScrollPane(viewer);
-    scrollPane.setBorder(null);
+        TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
+        viewer.setScale(1.2);
+        viewer.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        viewer.setTextColor(Color.WHITE);
 
-    // Agregar al JPanel Form
-    this.add(scrollPane, BorderLayout.CENTER);
+        viewer.setBackground(new Color(41, 49, 52));
+        viewer.setOpaque(true);
 
-    // Refrescar la UI
-    this.revalidate();
-    this.repaint();
-}
+        JScrollPane scrollPane = new JScrollPane(viewer);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(new Color(41, 49, 52));
 
+        this.add(scrollPane, BorderLayout.CENTER);
+
+        this.revalidate();
+        this.repaint();
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
