@@ -9,11 +9,10 @@ package PRUEBA;
  * How many dudes
  * @author DFSS
  * LOLOLOLOLOLOL
- * hola la carlos
+ * hola todo el mundov
  */ 
 public class NewClass {
 public static void main (String[] args){        
     System.out.println("Hello World");
-    
     }
 }
