@@ -32,7 +32,6 @@ public class SyntaxTreePane extends javax.swing.JPanel {
     }
     
     private void configurarUI() {
-        // Use BorderLayout like your other panels
         setLayout(new BorderLayout(0, 0));
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 

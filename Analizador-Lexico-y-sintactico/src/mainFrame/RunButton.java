@@ -6,7 +6,7 @@ import java.awt.*;
 public class RunButton extends JButton {
 
     // ====== TUNE THESE ======
-    private static final int SIZE = 28;                 // button + icon size
+    private static final int SIZE = 32;                 // button + icon size
     private static final Color BLUE = new Color(66, 165, 245); // nice UI blue
     private static final Color BLUE_DARK = new Color(30, 136, 229);
 
@@ -59,7 +59,6 @@ public class RunButton extends JButton {
                 boolean pressed = (c instanceof AbstractButton b)
                         && b.getModel().isArmed() && b.getModel().isPressed();
 
-                // Slightly brighter on press, slightly transparent always
                 Color fill = pressed ? brighten(base, 0.18f) : base;
 
                 int pad = Math.max(4, size / 6);
@@ -79,11 +78,9 @@ public class RunButton extends JButton {
                         3
                 );
 
-                // Fill
                 g2.setColor(withAlpha(fill, 235));
                 g2.fill(tri);
 
-                // Outline
                 g2.setColor(pressed ? brighten(stroke, 0.15f) : stroke);
                 g2.setStroke(new BasicStroke(Math.max(1.6f, size / 18f),
                         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
