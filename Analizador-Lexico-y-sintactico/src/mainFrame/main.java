@@ -66,7 +66,6 @@ public class main extends javax.swing.JFrame {
         textArea.setAntiAliasingEnabled(true);
         textArea.setBracketMatchingEnabled(true);
         textArea.setHighlightCurrentLine(true);
-        
         textArea.setTabsEmulated(true);
         textArea.setTabSize(4);
 
@@ -93,7 +92,6 @@ public class main extends javax.swing.JFrame {
 
     private void addNewEditorTab(String title) {
         RSyntaxTextArea ta = new RSyntaxTextArea();
-
         ta.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
         ta.setCodeFoldingEnabled(true);
         ta.setAntiAliasingEnabled(true);
@@ -112,8 +110,6 @@ public class main extends javax.swing.JFrame {
 
         RTextScrollPane sp = new RTextScrollPane(ta);
         sp.setLineNumbersEnabled(true);
-
-        // Store editor reference on the tab component
         sp.putClientProperty("editor", ta);
 
         jTabbedPane1.addTab(title, sp);
@@ -172,7 +168,6 @@ public class main extends javax.swing.JFrame {
 
         Path path = getCurrentTabPath();
 
-        // If no path yet OR user clicked Save As
         if (forceSaveAs || path == null) {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle(forceSaveAs ? "Save As" : "Save");
@@ -183,7 +178,6 @@ public class main extends javax.swing.JFrame {
 
             File f = chooser.getSelectedFile();
 
-            // Ensure .txt if you want
             String name = f.getName();
             if (!name.toLowerCase().endsWith(".txt")) {
                 f = new File(f.getParentFile(), name + ".txt");
