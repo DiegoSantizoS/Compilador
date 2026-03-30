@@ -70,4 +70,30 @@
     nbproject/build-impl.xml file. 
 
     -->
+        <property name="antlr.jar" value="lib/antlr-4.13.2-complete.jar"/>
+        <property name="grammar.file" value="src/grammar/Lenguaje.g4"/>
+        <property name="gen.dir" value="src/generated"/>
+        
+        <target name="generate-antlr">
+            <mkdir dir="${gen.dir}"/>
+        
+            <java classname="org.antlr.v4.Tool" fork="true" failonerror="true">
+                <classpath>
+                    <pathelement path="${antlr.jar}"/>
+                </classpath>
+        
+                <arg value="-o"/>
+                <arg value="${basedir}/${gen.dir}"/>
+        
+                <arg value="-visitor"/>
+        
+                <arg value="-package"/>
+                <arg value="generated"/>
+        
+                <arg value="${basedir}/${grammar.file}"/>
+            </java>
+        </target>
+        
+        <target name="-pre-compile" depends="generate-antlr"/>
+
 </project>
