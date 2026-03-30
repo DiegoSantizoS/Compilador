@@ -27,6 +27,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import generated.LenguajeLexer;
+import generated.LenguajeParser;
+import mainFrame.GeneradorTAC;
 
 /**
  *
@@ -504,10 +511,46 @@ public class main extends javax.swing.JFrame {
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
         RSyntaxTextArea ta = getCurrentEditor();
-        if (ta != null) {
-            String code = ta.getText();
-            System.out.println(code);
+    if (ta != null) {
+        String code = ta.getText();
+        if (code.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El editor está vacío.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
         }
+
+        try {
+            CharStream input = CharStreams.fromString(code);
+            LenguajeLexer lexer = new LenguajeLexer(input);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            LenguajeParser parser = new LenguajeParser(tokens);
+            
+            ParseTree tree = parser.programa();
+            
+            GeneradorTAC tacVisitor = new GeneradorTAC();
+            tacVisitor.visit(tree);
+            String codigoIntermedio = tacVisitor.getTAC();
+            
+            javax.swing.JTextArea tacArea = new javax.swing.JTextArea(codigoIntermedio);
+            tacArea.setEditable(false); 
+            tacArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 14)); 
+            tacArea.setMargin(new java.awt.Insets(10, 10, 10, 10));
+            
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(tacArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(500, 400)); 
+            
+            JOptionPane.showMessageDialog(this, 
+                scrollPane, 
+                "Generador TAC - Código de 3 Direcciones", 
+                JOptionPane.PLAIN_MESSAGE);
+
+        } catch(Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al analizar el código:\n" + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
     }//GEN-LAST:event_btnRunActionPerformed
 
     private void jMenuItemNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNewActionPerformed
