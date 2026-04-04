@@ -9,9 +9,9 @@ programa
     ;
 
 sentencia
-    : declaracion FIN_SENT
-    | asignacion  FIN_SENT
-    | imprimir    FIN_SENT
+    : declaracion FIN_SENT { System.out.println("Sentencia declaración"); }
+    | asignacion  FIN_SENT { System.out.println("Sentencia asignación"); }
+    | imprimir    FIN_SENT { System.out.println("Sentencia imprimir"); }
     | si
     | mientras
     | bloque
@@ -20,6 +20,7 @@ sentencia
 // Declaración: entero x;  entero x = 10;
 declaracion
     : tipo ID (IGUAL expresion)?
+    { System.out.println("Declaración: " + $ID.text); }
     ;
 
 tipo
@@ -32,26 +33,37 @@ tipo
 // Asignación: x = expr;
 asignacion
     : ID IGUAL expresion
+    { System.out.println("Asignación a: " + $ID.text); }
     ;
 
 // imprimir expr;
 imprimir
     : IMPRIMIR expresion
+    { System.out.println("Sentencia imprimir"); }
     ;
 
 // si (cond) { ... } sino { ... }
 si
-    : SI PAR_IZQ expresion PAR_DER bloque (SINO bloque)?
+    : SI PAR_IZQ expresion PAR_DER bloque
+      { System.out.println("Estructura SI"); }
+      (SINO bloque
+        { System.out.println("Tiene SINO"); }
+      )?
     ;
 
 // mientras (cond) { ... }
 mientras
     : MIENTRAS PAR_IZQ expresion PAR_DER bloque
+    { System.out.println("Bucle MIENTRAS"); }
     ;
 
 // { ... }  (permito sentencias con o sin ';' dentro del bloque)
 bloque
-    : LLAVE_IZQ sentenciaBloque* LLAVE_DER
+    : LLAVE_IZQ
+      { System.out.println("Inicio bloque"); }
+      sentenciaBloque*
+      LLAVE_DER
+      { System.out.println("Fin bloque"); }
     ;
 
 sentenciaBloque
