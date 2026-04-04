@@ -39,48 +39,49 @@ public class main extends javax.swing.JFrame {
     
     private final Map<java.awt.Component, File> tabFiles = new HashMap<>();
     private int nuevoContador = 1;
-    private final Map<java.awt.Component, JTextArea> terminalesPorEditor = new HashMap<>();
+    private JTextArea terminalUnica;
+    
     
     public main() {
         setUndecorated(true);
         initComponents();
         configurarTabsCerrables();
         crearPopupArchivo();
-        jTabbedPaneTerminal.remove(0);
         jSplitPanelVertical.setDividerLocation(1.0);
+        
+        inicializarTerminal();
+    }
+    
+    private void inicializarTerminal() {
+        terminalUnica = new JTextArea();
+        terminalUnica.setEditable(false);
+
+        JScrollPane scrollPane = new JScrollPane(terminalUnica);
+
+        jTabbedPaneTerminal.removeAll();
+        jTabbedPaneTerminal.addTab("Terminal", scrollPane);
+        jTabbedPaneTerminal.setSelectedComponent(scrollPane);
     }
     
     private JTextArea nuevaTerminal() {
-        java.awt.Component tabActual = jTabbedEditorPanel.getSelectedComponent();
-
-        if (tabActual == null) {
-            return null;
-        }
-        
-        JTextArea existente = terminalesPorEditor.get(tabActual);
-        if (existente != null) {
-            return existente;
+        if (terminalUnica == null) {
+        inicializarTerminal();
         }
 
-        int selectedIndex = jTabbedEditorPanel.getSelectedIndex();
-        String tituloEditor = jTabbedEditorPanel.getTitleAt(selectedIndex);
+        int editorIndex = jTabbedEditorPanel.getSelectedIndex();
+        String nombreEditor = "Sin archivo";
 
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
+        if (editorIndex != -1) {
+            nombreEditor = jTabbedEditorPanel.getTitleAt(editorIndex);
+        }
 
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        terminalUnica.setText("");
+        jTabbedPaneTerminal.setTitleAt(0, "Output - " + nombreEditor);
+        jTabbedPaneTerminal.setSelectedIndex(0);
 
-        String titulo = "Terminal " + tituloEditor;
-        jTabbedPaneTerminal.addTab(titulo, scrollPane);
-
-        int index = jTabbedPaneTerminal.getTabCount() - 1;
-        jTabbedPaneTerminal.setTabComponentAt(index, new ClosableTabComponent(jTabbedPaneTerminal));
-        jTabbedPaneTerminal.setSelectedIndex(index);
-
-        terminalesPorEditor.put(tabActual, textArea);
-        return textArea;
+        return terminalUnica;
     }
-
+    
     private void configurarTabsCerrables() {
         for (int i = 0; i < jTabbedEditorPanel.getTabCount(); i++) {
             jTabbedEditorPanel.setTabComponentAt(i, new ClosableTabComponent(jTabbedEditorPanel));
@@ -829,8 +830,15 @@ public class main extends javax.swing.JFrame {
 
         //terminal.setText("");
         
+        int editorIndex = jTabbedEditorPanel.getSelectedIndex();
+        String nombreEditor = "Sin archivo";
+
+        if (editorIndex != -1) {
+            nombreEditor = jTabbedEditorPanel.getTitleAt(editorIndex);
+        }
+        
         jSplitPanelVertical.setDividerLocation(0.7);
-        terminal.append("Compilando...\n");
+        terminal.append("Compilando " + nombreEditor + "...\n");
 
         try {
             CharStream input = CharStreams.fromString(code);
