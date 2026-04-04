@@ -3,10 +3,5 @@ TABLA DE SIMBOLOS GENERADA
 NOMBRE          | TIPO       | LINEA
 ------------------------------------------
 x               | entero     | 1
-precio          | real       | 2
-nombre          | cadena     | 3
-activo          | booleano   | 4
-y               | entero     | 9
-mensaje         | cadena     | 12
-temp            | entero     | 17
+y               | real       | 2
 ==========================================

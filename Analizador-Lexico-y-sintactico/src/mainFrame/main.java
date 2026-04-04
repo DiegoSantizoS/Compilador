@@ -1,9 +1,12 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
 package mainFrame;
 import java.io.IOException;
 import org.fife.ui.rsyntaxtextarea.*;
 import org.fife.ui.rtextarea.*;
 import com.formdev.flatlaf.FlatDarkLaf;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Insets;
@@ -24,6 +27,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import generated.LenguajeLexer;
+import generated.LenguajeParser;
+import mainFrame.GeneradorTAC;
 
 /**
  *
@@ -35,20 +45,12 @@ public class main extends javax.swing.JFrame {
     private org.fife.ui.rsyntaxtextarea.RSyntaxTextArea textArea = new RSyntaxTextArea();
     private RunButton btnRun; 
     private SearchButton btnSearch1; 
-    //private tabla_token panelTokens;
+    
     
     /**
      * Creates new form main
      */
     public main() {
-        
-        getContentPane().setBackground(new Color(41, 49, 52)); 
-        setBackground(new Color(41, 49, 52));
-        UIManager.put("Panel.background", new Color(41, 49, 52));
-        UIManager.put("control", new Color(41, 49, 52));
-        
-        setUndecorated(true);
-        setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf()); 
         } catch (Exception e) {
@@ -66,6 +68,7 @@ public class main extends javax.swing.JFrame {
         textArea.setAntiAliasingEnabled(true);
         textArea.setBracketMatchingEnabled(true);
         textArea.setHighlightCurrentLine(true);
+        
         textArea.setTabsEmulated(true);
         textArea.setTabSize(4);
 
@@ -85,13 +88,13 @@ public class main extends javax.swing.JFrame {
         
        //jScrollPane1.setViewportView(textArea);
         jScrollPane1.putClientProperty("editor", textArea);
-        syntaxTreePane1.showTreeGui("");
       }
     
     private int untitledCount = 2;
 
     private void addNewEditorTab(String title) {
         RSyntaxTextArea ta = new RSyntaxTextArea();
+
         ta.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
         ta.setCodeFoldingEnabled(true);
         ta.setAntiAliasingEnabled(true);
@@ -110,6 +113,8 @@ public class main extends javax.swing.JFrame {
 
         RTextScrollPane sp = new RTextScrollPane(ta);
         sp.setLineNumbersEnabled(true);
+
+        // Store editor reference on the tab component
         sp.putClientProperty("editor", ta);
 
         jTabbedPane1.addTab(title, sp);
@@ -168,6 +173,7 @@ public class main extends javax.swing.JFrame {
 
         Path path = getCurrentTabPath();
 
+        // If no path yet OR user clicked Save As
         if (forceSaveAs || path == null) {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle(forceSaveAs ? "Save As" : "Save");
@@ -178,6 +184,7 @@ public class main extends javax.swing.JFrame {
 
             File f = chooser.getSelectedFile();
 
+            // Ensure .txt if you want
             String name = f.getName();
             if (!name.toLowerCase().endsWith(".txt")) {
                 f = new File(f.getParentFile(), name + ".txt");
@@ -269,7 +276,8 @@ public class main extends javax.swing.JFrame {
             );
         }
     }
- 
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -281,16 +289,14 @@ public class main extends javax.swing.JFrame {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        panelEditor = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         javax.swing.JTextArea jTextArea1 = new RSyntaxTextArea();
         jToolBar1 = new javax.swing.JToolBar();
         javax.swing.JButton btnRun = new RunButton();
         javax.swing.JButton btnSearch1 = new SearchButton();
-        tablaTokenPanel1 = new tokens.TablaTokenPanel();
-        tablaSimbolosPanel1 = new util.TablaSimbolosPanel();
-        syntaxTreePane1 = new SyntaxTree.SyntaxTreePane();
+        jPanel3 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItemNew = new javax.swing.JMenuItem();
@@ -299,26 +305,20 @@ public class main extends javax.swing.JFrame {
         jMenuItemSaveAs = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setBackground(new java.awt.Color(0, 0, 0));
-        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        setIconImages(null);
-        setMaximumSize(new java.awt.Dimension(1920, 1680));
-        setMinimumSize(new java.awt.Dimension(960, 500));
-        setPreferredSize(new java.awt.Dimension(960, 500));
+        setMaximumSize(new java.awt.Dimension(0, 0));
+        setMinimumSize(new java.awt.Dimension(600, 400));
+        setPreferredSize(new java.awt.Dimension(600, 400));
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
-        panelEditor.setMinimumSize(new java.awt.Dimension(250, 150));
-        panelEditor.setPreferredSize(new java.awt.Dimension(250, 150));
-        panelEditor.setLayout(new java.awt.GridBagLayout());
+        jPanel1.setLayout(new java.awt.GridBagLayout());
 
-        jTabbedPane1.setMinimumSize(new java.awt.Dimension(232, 124));
         jTabbedPane1.setOpaque(true);
 
         jScrollPane1.setBorder(null);
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
         jTextArea1.setColumns(20);
-        jTextArea1.setFont(new java.awt.Font("Times New Roman", 0, 18)); // NOI18N
+        jTextArea1.setFont(new java.awt.Font("Times New Roman", 0, 14)); // NOI18N
         jTextArea1.setRows(5);
         jTextArea1.setFocusable(false);
         jTextArea1.setFocusTraversalKeysEnabled(false);
@@ -347,7 +347,8 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        panelEditor.add(jTabbedPane1, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 5);
+        jPanel1.add(jTabbedPane1, gridBagConstraints);
 
         jToolBar1.setRollover(true);
 
@@ -383,74 +384,43 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 0.05;
-        panelEditor.add(jToolBar1, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
+        jPanel1.add(jToolBar1, gridBagConstraints);
 
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridheight = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        getContentPane().add(panelEditor, gridBagConstraints);
+        jPanel3.setMaximumSize(new java.awt.Dimension(0, 20));
+        jPanel3.setMinimumSize(new java.awt.Dimension(0, 20));
+        jPanel3.setPreferredSize(new java.awt.Dimension(0, 20));
 
-        tablaTokenPanel1.setMaximumSize(new java.awt.Dimension(2000, 2500));
-        tablaTokenPanel1.setMinimumSize(new java.awt.Dimension(380, 350));
-        tablaTokenPanel1.setPreferredSize(new java.awt.Dimension(380, 350));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 0.5;
-        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
-        getContentPane().add(tablaTokenPanel1, gridBagConstraints);
-
-        tablaSimbolosPanel1.setMaximumSize(new java.awt.Dimension(2000, 2500));
-        tablaSimbolosPanel1.setMinimumSize(new java.awt.Dimension(380, 350));
-        tablaSimbolosPanel1.setPreferredSize(new java.awt.Dimension(380, 350));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 0.5;
-        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
-        getContentPane().add(tablaSimbolosPanel1, gridBagConstraints);
-
-        syntaxTreePane1.setToolTipText("");
-        syntaxTreePane1.setMinimumSize(new java.awt.Dimension(0, 500));
-        syntaxTreePane1.setOpaque(false);
-        syntaxTreePane1.setPreferredSize(new java.awt.Dimension(0, 500));
-
-        javax.swing.GroupLayout syntaxTreePane1Layout = new javax.swing.GroupLayout(syntaxTreePane1);
-        syntaxTreePane1.setLayout(syntaxTreePane1Layout);
-        syntaxTreePane1Layout.setHorizontalGroup(
-            syntaxTreePane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 0, Short.MAX_VALUE)
         );
-        syntaxTreePane1Layout.setVerticalGroup(
-            syntaxTreePane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 24, Short.MAX_VALUE)
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 0.05;
+        jPanel1.add(jPanel3, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(10, 10, 20, 10);
-        getContentPane().add(syntaxTreePane1, gridBagConstraints);
+        getContentPane().add(jPanel1, gridBagConstraints);
 
         jMenuBar1.setOpaque(true);
 
         jMenu1.setText("File");
-        jMenu1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jMenu1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jMenu1.setIconTextGap(0);
 
         jMenuItemNew.setFont(new java.awt.Font("Times New Roman", 0, 14)); // NOI18N
@@ -540,23 +510,46 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSearch1ActionPerformed
 
     private void btnRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunActionPerformed
-         RSyntaxTextArea ta = getCurrentEditor();
+        RSyntaxTextArea ta = getCurrentEditor();
     if (ta != null) {
         String code = ta.getText();
+        if (code.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El editor está vacío.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        tablaSimbolosPanel1.actualizarDesdeCodigo(code);
-        tablaSimbolosPanel1.revalidate();
-        tablaSimbolosPanel1.repaint();
+        try {
+            CharStream input = CharStreams.fromString(code);
+            LenguajeLexer lexer = new LenguajeLexer(input);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            LenguajeParser parser = new LenguajeParser(tokens);
+            
+            ParseTree tree = parser.programa();
+            
+            GeneradorTAC tacVisitor = new GeneradorTAC();
+            tacVisitor.visit(tree);
+            String codigoIntermedio = tacVisitor.getTAC();
+            
+            javax.swing.JTextArea tacArea = new javax.swing.JTextArea(codigoIntermedio);
+            tacArea.setEditable(false); 
+            tacArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 14)); 
+            tacArea.setMargin(new java.awt.Insets(10, 10, 10, 10));
+            
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(tacArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(500, 400)); 
+            
+            JOptionPane.showMessageDialog(this, 
+                scrollPane, 
+                "Generador TAC - Código de 3 Direcciones", 
+                JOptionPane.PLAIN_MESSAGE);
 
-        tablaTokenPanel1.actualizarTabla(code);
-        tablaTokenPanel1.revalidate();
-        tablaTokenPanel1.repaint();
-
-        syntaxTreePane1.showTreeGui(code);
-        syntaxTreePane1.revalidate();
-        syntaxTreePane1.repaint();
-
-        System.out.println(code);
+        } catch(Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al analizar el código:\n" + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
     }//GEN-LAST:event_btnRunActionPerformed
 
@@ -608,12 +601,10 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItemOpen;
     private javax.swing.JMenuItem jMenuItemSave;
     private javax.swing.JMenuItem jMenuItemSaveAs;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JToolBar jToolBar1;
-    private javax.swing.JPanel panelEditor;
-    private SyntaxTree.SyntaxTreePane syntaxTreePane1;
-    private util.TablaSimbolosPanel tablaSimbolosPanel1;
-    private tokens.TablaTokenPanel tablaTokenPanel1;
     // End of variables declaration//GEN-END:variables
 }

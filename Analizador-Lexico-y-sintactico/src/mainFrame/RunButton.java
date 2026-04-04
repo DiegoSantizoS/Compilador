@@ -1,49 +1,34 @@
 package mainFrame;
-
 import javax.swing.*;
 import java.awt.*;
 
 public class RunButton extends JButton {
 
-    // ====== TUNE THESE ======
-    private static final int SIZE = 32;                 // button + icon size
-    private static final Color BLUE = new Color(66, 165, 245); // nice UI blue
-    private static final Color BLUE_DARK = new Color(30, 136, 229);
-
     public RunButton() {
         super();
         setText(null);
 
-        // Blue arrow icon
-        setIcon(new RightArrowIcon(SIZE, BLUE, BLUE_DARK));
+        setIcon(new RightArrowIcon(32, new Color(0, 200, 0)));
 
-        // Look/feel
         setOpaque(false);
         setContentAreaFilled(false);
         setBorderPainted(false);
         setFocusPainted(false);
 
         setMargin(new Insets(0, 0, 0, 0));
-
-        // IMPORTANT: match icon size so it doesn't clip
-        Dimension d = new Dimension(SIZE, SIZE);
-        setPreferredSize(d);
-        setMinimumSize(d);
-        setMaximumSize(d);
-
+        setPreferredSize(new Dimension(20, 20)); // you can change this
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         setToolTipText("Run");
     }
 
     static class RightArrowIcon implements Icon {
         private final int size;
-        private final Color base;
-        private final Color stroke;
+        private final Color color;
 
-        RightArrowIcon(int size, Color base, Color stroke) {
+        RightArrowIcon(int size, Color color) {
             this.size = size;
-            this.base = base;
-            this.stroke = stroke;
+            this.color = color;
         }
 
         @Override public int getIconWidth()  { return size; }
@@ -56,19 +41,12 @@ public class RunButton extends JButton {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-                boolean pressed = (c instanceof AbstractButton b)
-                        && b.getModel().isArmed() && b.getModel().isPressed();
-
-                Color fill = pressed ? brighten(base, 0.18f) : base;
-
-                int pad = Math.max(4, size / 6);
+                int pad = Math.max(3, size / 7);
 
                 int x1 = x + pad;
                 int y1 = y + pad;
-
                 int x2 = x + size - pad;
                 int y2 = y + size / 2;
-
                 int x3 = x + pad;
                 int y3 = y + size - pad;
 
@@ -78,11 +56,16 @@ public class RunButton extends JButton {
                         3
                 );
 
-                g2.setColor(withAlpha(fill, 235));
+                boolean pressed = (c instanceof AbstractButton b)
+                        && b.getModel().isArmed() && b.getModel().isPressed();
+
+                Color fill = pressed ? color.brighter(): color;
+
+                g2.setColor(new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), 230));
                 g2.fill(tri);
 
-                g2.setColor(pressed ? brighten(stroke, 0.15f) : stroke);
-                g2.setStroke(new BasicStroke(Math.max(1.6f, size / 18f),
+                g2.setColor(fill.darker());
+                g2.setStroke(new BasicStroke(Math.max(1.4f, size / 18f),
                         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 g2.draw(tri);
 
@@ -90,18 +73,6 @@ public class RunButton extends JButton {
                 g2.dispose();
             }
         }
-
-        private static Color withAlpha(Color c, int a) {
-            return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, a)));
-        }
-
-        private static Color brighten(Color c, float amount) {
-            // amount: 0.0 -> no change, 1.0 -> white
-            amount = Math.max(0f, Math.min(1f, amount));
-            int r = (int) (c.getRed()   + (255 - c.getRed())   * amount);
-            int g = (int) (c.getGreen() + (255 - c.getGreen()) * amount);
-            int b = (int) (c.getBlue()  + (255 - c.getBlue())  * amount);
-            return new Color(Math.min(255, r), Math.min(255, g), Math.min(255, b));
-        }
     }
+
 }
