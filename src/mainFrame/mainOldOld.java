@@ -374,9 +374,8 @@ public class mainOldOld extends javax.swing.JFrame {
         jToolBar1 = new javax.swing.JToolBar();
         javax.swing.JButton btnRun = new RunButton();
         javax.swing.JButton btnSearch1 = new SearchButton();
-        tablaTokenPanel1 = new tokens.TablaTokenPanel();
-        tablaSimbolosPanel1 = new symbols.TablaSimbolosPanel();
-        syntaxTreePane1 = new syntax_tree.SyntaxTreePane1();
+        tablaTokenPanel1 = new TablaDeTokens.TablaDeTokensPanel();
+        syntaxTreePane1 = new AnalizadorSintactico.SyntaxTreePane1();
         titlePanel = new javax.swing.JPanel();
         panelPestanas = new javax.swing.JPanel();
         btnArchivo = new javax.swing.JButton();
@@ -513,19 +512,6 @@ public class mainOldOld extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
         getContentPane().add(tablaTokenPanel1, gridBagConstraints);
 
-        tablaSimbolosPanel1.setBackground(new java.awt.Color(204, 204, 204));
-        tablaSimbolosPanel1.setMaximumSize(new java.awt.Dimension(2000, 2500));
-        tablaSimbolosPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
-        tablaSimbolosPanel1.setPreferredSize(new java.awt.Dimension(380, 350));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 0.5;
-        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
-        getContentPane().add(tablaSimbolosPanel1, gridBagConstraints);
-
         syntaxTreePane1.setToolTipText("");
         syntaxTreePane1.setMinimumSize(new java.awt.Dimension(0, 0));
         syntaxTreePane1.setOpaque(false);
@@ -535,7 +521,7 @@ public class mainOldOld extends javax.swing.JFrame {
         syntaxTreePane1.setLayout(syntaxTreePane1Layout);
         syntaxTreePane1Layout.setHorizontalGroup(
             syntaxTreePane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1068, Short.MAX_VALUE)
+            .addGap(0, 797, Short.MAX_VALUE)
         );
         syntaxTreePane1Layout.setVerticalGroup(
             syntaxTreePane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -811,7 +797,7 @@ public class mainOldOld extends javax.swing.JFrame {
         RSyntaxTextArea ta = getCurrentEditor();
             if (ta != null) {
                     String code = ta.getText();
-                    tablaSimbolosPanel1.actualizarDesdeCodigo(code);
+                    //tablaSimbolosPanel1.actualizarDesdeCodigo(code);
                     tablaTokenPanel1.actualizarTabla(code);
                     syntaxTreePane1.showTreeGui(code);
                     System.out.println(code);
@@ -1069,9 +1055,8 @@ private int xMouse, yMouse;
     private javax.swing.JPanel panelEditor;
     private javax.swing.JPanel panelMods;
     private javax.swing.JPanel panelPestanas;
-    private syntax_tree.SyntaxTreePane1 syntaxTreePane1;
-    private symbols.TablaSimbolosPanel tablaSimbolosPanel1;
-    private tokens.TablaTokenPanel tablaTokenPanel1;
+    private AnalizadorSintactico.SyntaxTreePane1 syntaxTreePane1;
+    private TablaDeTokens.TablaDeTokensPanel tablaTokenPanel1;
     private javax.swing.JPanel titlePanel;
     // End of variables declaration//GEN-END:variables
 }

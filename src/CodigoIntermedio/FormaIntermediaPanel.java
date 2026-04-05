@@ -1,4 +1,4 @@
-package generador_codigoI;
+package CodigoIntermedio;
 
 import java.awt.BorderLayout;
 import javax.swing.JLabel;
@@ -8,7 +8,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class FormaIntermediaPane extends JPanel {
+public class FormaIntermediaPanel extends JPanel {
 
     private final JLabel titulo;
     private final JTextArea areaCodigo;
@@ -16,7 +16,7 @@ public class FormaIntermediaPane extends JPanel {
     private final StringBuilder ir = new StringBuilder();
     private int labelCount = 0;
 
-    public FormaIntermediaPane() {
+    public FormaIntermediaPanel() {
         setLayout(new BorderLayout());
 
         titulo = new JLabel("Codigo Intermedio", SwingConstants.CENTER);
@@ -45,82 +45,114 @@ public class FormaIntermediaPane extends JPanel {
     }
 
     private String recorrer(ParseTree tree) {
-        System.out.println("Nodo: " + tree.getClass().getSimpleName());
+        //System.out.println("Nodo: " + tree.getClass().getSimpleName());
 
-        // PROGRAMA
         if (tree instanceof generated.LenguajeParser.ProgramaContext ctx) {
-            for (var s : ctx.sentencia()) {
-                recorrer(s);
+            for (var e : ctx.elemento()) {
+                recorrer(e);
             }
         }
 
-        // SENTENCIA
+        else if (tree instanceof generated.LenguajeParser.ElementoContext ctx) {
+            if (ctx.sentencia() != null) return recorrer(ctx.sentencia());
+            if (ctx.funcion() != null) return recorrer(ctx.funcion());
+        }
+
+        else if (tree instanceof generated.LenguajeParser.FuncionContext ctx) {
+            String nombre = ctx.ID().getText();
+            ir.append("FUNC ").append(nombre).append(":\n");
+
+            for (var s : ctx.sentenciaBloque()) {
+                recorrer(s);
+            }
+
+            ir.append("END_FUNC ").append(nombre).append("\n");
+        }
+
         else if (tree instanceof generated.LenguajeParser.SentenciaContext ctx) {
-            recorrer(ctx.getChild(0));
+            return recorrer(ctx.getChild(0));
         }
 
-        // SENTENCIA EN BLOQUE
         else if (tree instanceof generated.LenguajeParser.SentenciaBloqueContext ctx) {
-            recorrer(ctx.getChild(0));
+            return recorrer(ctx.getChild(0));
         }
 
-        // DECLARACION
         else if (tree instanceof generated.LenguajeParser.DeclaracionContext ctx) {
             String id = ctx.ID().getText();
-            if (ctx.expresion() != null) {
-                String expr = recorrer(ctx.expresion());
+            if (ctx.e != null) {
+                String expr = recorrer(ctx.e);
                 ir.append("DECL_ASSIGN(").append(id).append(", ").append(expr).append(")\n");
             } else {
                 ir.append("DECL(").append(id).append(")\n");
             }
         }
 
-        // ASIGNACION
         else if (tree instanceof generated.LenguajeParser.AsignacionContext ctx) {
             String id = ctx.ID().getText();
             String expr = recorrer(ctx.expresion());
             ir.append("ASSIGN(").append(id).append(", ").append(expr).append(")\n");
         }
 
-        // PRINT
         else if (tree instanceof generated.LenguajeParser.ImprimirContext ctx) {
-            String expr = recorrer(ctx.expresion());
+            String expr = recorrer(ctx.e);
             ir.append("PRINT(").append(expr).append(")\n");
         }
 
-        // IF
+        else if (tree instanceof generated.LenguajeParser.RetornarContext ctx) {
+            if (ctx.e != null) {
+                String expr = recorrer(ctx.e);
+                ir.append("RETURN(").append(expr).append(")\n");
+            } else {
+                ir.append("RETURN()\n");
+            }
+        }
+
+        else if (tree instanceof generated.LenguajeParser.LlamadaFuncionContext ctx) {
+            String nombre = ctx.ID().getText();
+
+            if (ctx.argumentos() == null) {
+                return "CALL(" + nombre + ")";
+            }
+
+            StringBuilder args = new StringBuilder();
+            for (int i = 0; i < ctx.argumentos().expresion().size(); i++) {
+                if (i > 0) args.append(", ");
+                args.append(recorrer(ctx.argumentos().expresion(i)));
+            }
+
+            return "CALL(" + nombre + ", " + args + ")";
+        }
+
         else if (tree instanceof generated.LenguajeParser.SiContext ctx) {
-            String cond = recorrer(ctx.expresion());
+            String cond = recorrer(ctx.c);
             String L1 = nuevaEtiqueta();
             String L2 = nuevaEtiqueta();
 
             ir.append("IF NOT ").append(cond).append(" GOTO ").append(L1).append("\n");
-            recorrer(ctx.bloque(0));
+            recorrer(ctx.b1);
 
-            if (ctx.bloque().size() > 1) {
+            if (ctx.b2 != null) {
                 ir.append("GOTO ").append(L2).append("\n");
                 ir.append(L1).append(":\n");
-                recorrer(ctx.bloque(1));
+                recorrer(ctx.b2);
                 ir.append(L2).append(":\n");
             } else {
                 ir.append(L1).append(":\n");
             }
         }
 
-        // WHILE
         else if (tree instanceof generated.LenguajeParser.MientrasContext ctx) {
             String L1 = nuevaEtiqueta();
             String L2 = nuevaEtiqueta();
 
             ir.append(L1).append(":\n");
-            String cond = recorrer(ctx.expresion());
+            String cond = recorrer(ctx.c);
             ir.append("IF NOT ").append(cond).append(" GOTO ").append(L2).append("\n");
-            recorrer(ctx.bloque());
+            recorrer(ctx.b);
             ir.append("GOTO ").append(L1).append("\n");
             ir.append(L2).append(":\n");
         }
 
-        // BLOQUE
         else if (tree instanceof generated.LenguajeParser.BloqueContext ctx) {
             for (var s : ctx.sentenciaBloque()) {
                 recorrer(s);
@@ -128,10 +160,9 @@ public class FormaIntermediaPane extends JPanel {
         }
 
         else if (tree instanceof generated.LenguajeParser.ExpresionContext ctx) {
-            return recorrer(ctx.getChild(0));
+            return recorrer(ctx.o);
         }
 
-        // OR
         else if (tree instanceof generated.LenguajeParser.OrExprContext ctx) {
             String result = recorrer(ctx.andExpr(0));
             for (int i = 1; i < ctx.andExpr().size(); i++) {
@@ -141,7 +172,6 @@ public class FormaIntermediaPane extends JPanel {
             return result;
         }
 
-        // AND
         else if (tree instanceof generated.LenguajeParser.AndExprContext ctx) {
             String result = recorrer(ctx.igualdad(0));
             for (int i = 1; i < ctx.igualdad().size(); i++) {
@@ -151,7 +181,6 @@ public class FormaIntermediaPane extends JPanel {
             return result;
         }
 
-        // == !=
         else if (tree instanceof generated.LenguajeParser.IgualdadContext ctx) {
             String result = recorrer(ctx.comparacion(0));
             for (int i = 1; i < ctx.comparacion().size(); i++) {
@@ -164,7 +193,6 @@ public class FormaIntermediaPane extends JPanel {
             return result;
         }
 
-        // > < >= <=
         else if (tree instanceof generated.LenguajeParser.ComparacionContext ctx) {
             String result = recorrer(ctx.suma(0));
             for (int i = 1; i < ctx.suma().size(); i++) {
@@ -181,7 +209,6 @@ public class FormaIntermediaPane extends JPanel {
             return result;
         }
 
-        // + -
         else if (tree instanceof generated.LenguajeParser.SumaContext ctx) {
             String result = recorrer(ctx.mult(0));
             for (int i = 1; i < ctx.mult().size(); i++) {
@@ -194,7 +221,6 @@ public class FormaIntermediaPane extends JPanel {
             return result;
         }
 
-        // * /
         else if (tree instanceof generated.LenguajeParser.MultContext ctx) {
             String result = recorrer(ctx.unario(0));
             for (int i = 1; i < ctx.unario().size(); i++) {
@@ -207,25 +233,24 @@ public class FormaIntermediaPane extends JPanel {
             return result;
         }
 
-        // UNARIO
         else if (tree instanceof generated.LenguajeParser.UnarioContext ctx) {
-            if (ctx.unario() != null) {
-                String val = recorrer(ctx.unario());
+            if (ctx.u != null) {
+                String val = recorrer(ctx.u);
                 String op = ctx.getChild(0).getText();
                 return op.equals("!") ? "NOT(" + val + ")" : "NEG(" + val + ")";
             }
             return recorrer(ctx.primario());
         }
 
-        // PRIMARIO
         else if (tree instanceof generated.LenguajeParser.PrimarioContext ctx) {
-            if (ctx.expresion() != null) return recorrer(ctx.expresion());
+            if (ctx.e != null) return recorrer(ctx.e);
             if (ctx.NUMERO() != null) return "CONST(" + ctx.NUMERO().getText() + ")";
             if (ctx.ID() != null) return "VAR(" + ctx.ID().getText() + ")";
             if (ctx.VERDADERO() != null) return "TRUE";
             if (ctx.FALSO() != null) return "FALSE";
             if (ctx.CADENA_LIT() != null) return "STR(" + ctx.CADENA_LIT().getText() + ")";
             if (ctx.leer() != null) return "READ()";
+            if (ctx.llamadaFuncion() != null) return recorrer(ctx.llamadaFuncion());
         }
 
         return "";

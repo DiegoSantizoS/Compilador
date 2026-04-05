@@ -1,46 +1,49 @@
-package syntax_tree;
+package CodigoIntermedio;
 
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.awt.BorderLayout;
-import java.util.Arrays;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
-import org.antlr.v4.gui.TreeViewer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class SyntaxTreePane extends JPanel {
+public class PanelTAC extends JPanel {
 
     private final JLabel titulo;
+    private final JTextArea areaCodigo;
 
-    public SyntaxTreePane() {
+    public PanelTAC() {
         setLayout(new BorderLayout());
 
-        titulo = new JLabel("Árbol Sintáctico", SwingConstants.CENTER);
+        titulo = new JLabel("Código de Tres Direcciones (TAC)", SwingConstants.CENTER);
         add(titulo, BorderLayout.NORTH);
+
+        areaCodigo = new JTextArea();
+        areaCodigo.setEditable(false);
+
+        JScrollPane scrollPane = new JScrollPane(areaCodigo);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
-    public void showTreeGui(String codigo) {
-        CharStream input = CharStreams.fromString(codigo);
+    public void showTAC(String codigoFuente) {
+        CharStream input = CharStreams.fromString(codigoFuente);
         LenguajeLexer lexer = new LenguajeLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         LenguajeParser parser = new LenguajeParser(tokens);
 
         ParseTree tree = parser.programa();
 
-        removeAll();
-        setLayout(new BorderLayout());
-        add(titulo, BorderLayout.NORTH);
+        GeneradorTAC generador = new GeneradorTAC();
+        generador.visit(tree);
 
-        TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
-        JScrollPane scrollPane = new JScrollPane(viewer);
-
-        add(scrollPane, BorderLayout.CENTER);
+        areaCodigo.setText(generador.getTAC());
+        areaCodigo.setCaretPosition(0);
 
         revalidate();
         repaint();

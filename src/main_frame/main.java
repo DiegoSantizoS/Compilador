@@ -1,7 +1,8 @@
 package main_frame;
 //@author DFSS
 
-import AnalizadorSemantico.Analizadorsem;
+import AnalizadorSemantico.*;
+import AnalizadorSemantico.ArbolSemanticoPanel;
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.awt.Color;
@@ -55,8 +56,62 @@ public class main extends javax.swing.JFrame {
         configurarTabsCerrables();
         crearPopupArchivo();
         jSplitPanelVertical.setDividerLocation(1.0);
+        jComboBoxGraphicsSelected.removeAllItems();
+        jComboBoxGraphicsSelected.addItem("-");
+        jComboBoxGraphicsSelected.setEditable(false);
+        jTextAreaTerminal0.removeAll();
+        jSplitPanelVertical.setEnabled(false);
+        jTextAreaTerminal0.setEnabled(false);
+        actualizarGrafico();
+        //inicializarTerminal();
+    }
+    
+    private void resetApp() {
+        jTextAreaTerminal0.removeAll();
+        if (jTabbedPaneTerminal.getTabCount() > 0) {
+            jTabbedPaneTerminal.removeAll();
+        }
+        jSplitPanelVertical.setEnabled(false);
+        jTextAreaTerminal0.setEnabled(false);
+        jSplitPanelVertical.setDividerLocation(1.0);
+        jSplitPanelVertical.setEnabled(false);      
+        jComboBoxGraphicsSelected.removeAllItems();
+        jComboBoxGraphicsSelected.addItem("-");
+        jComboBoxGraphicsSelected.setSelectedIndex(0);
+        java.awt.CardLayout cl = (java.awt.CardLayout) jPanelGraphics.getLayout();
+        cl.show(jPanelGraphics, "logo_panel");
+    }
+    
+    private void actualizarGrafico() {
+        java.awt.CardLayout cl = (java.awt.CardLayout) jPanelGraphics.getLayout();
+        String selected = String.valueOf(jComboBoxGraphicsSelected.getSelectedItem());
 
-        inicializarTerminal();
+        switch (selected) {
+            case "-":
+                cl.show(jPanelGraphics, "logo_panel");
+                break;
+            case "Tabla de Tokens":
+                cl.show(jPanelGraphics, "tokens_table");
+                break;
+            case "Arbol Sintactico":
+                cl.show(jPanelGraphics, "syntax_tree");
+                break;
+            case "Tabla de Simbolos":
+                cl.show(jPanelGraphics, "symbol_table");
+                break;
+            case "Arbol Semantico":
+                cl.show(jPanelGraphics, "semantics_tree");
+                break;
+            case "Codigo Intermedio":
+                cl.show(jPanelGraphics, "intermediate_code");
+                break;
+            case "Codigo TAC":
+                cl.show(jPanelGraphics, "tac_code");
+                break;
+            default:
+                cl.show(jPanelGraphics, "logo_panel");
+                break;
+        }
     }
 
     private void inicializarTerminal() {
@@ -394,19 +449,19 @@ public class main extends javax.swing.JFrame {
         jPanelEditorTools = new javax.swing.JPanel();
         jPanelEditorButtons = new javax.swing.JPanel();
         jButtonRun = new javax.swing.JButton();
-        jButtonSearch = new javax.swing.JButton();
         jPanelEditorToolsFiller = new javax.swing.JPanel();
         jComboBoxGraphicsSelected = new javax.swing.JComboBox<>();
         jTabbedEditorPanel = new javax.swing.JTabbedPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jPanelGraphics = new javax.swing.JPanel();
-        syntaxTreePane1 = new syntax_tree.SyntaxTreePane();
-        tablaSimbolosPanel1 = new symbols.TablaSimbolosPanel();
-        tablaTokenPanel1 = new tokens.TablaTokenPanel();
-        semanticsTreePane1 = new AnalizadorSemantico.SemanticsTreePane();
-        formaIntermediaPane1 = new generador_codigoI.FormaIntermediaPane();
-        tacPane1 = new generador_codigoI.TacPane();
+        formaIntermediaPane1 = new CodigoIntermedio.FormaIntermediaPanel();
+        tacPane1 = new CodigoIntermedio.PanelTAC();
+        arbolSemanticoPanel2 = new AnalizadorSemantico.ArbolSemanticoPanel();
+        tablaSimbolosPanel1 = new TablaDeSimbolos.TablaDeSimbolosPanel();
+        tablaDeTokensPanel1 = new TablaDeTokens.TablaDeTokensPanel();
+        arbolSintacticoPanel1 = new AnalizadorSintactico.ArbolSintacticoPanel();
+        jPanelLogo = new javax.swing.JPanel();
         jTabbedPaneTerminal = new javax.swing.JTabbedPane();
         jScrollPanelTerminal0 = new javax.swing.JScrollPane();
         jTextAreaTerminal0 = new javax.swing.JTextArea();
@@ -440,6 +495,7 @@ public class main extends javax.swing.JFrame {
                 formMouseReleased(evt);
             }
         });
+        addWindowStateListener(this::formWindowStateChanged);
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
         jSplitPanelVertical.setDividerLocation(350);
@@ -474,17 +530,6 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanelEditorButtons.add(jButtonRun, gridBagConstraints);
 
-        jButtonSearch.setText("SEARCH");
-        jButtonSearch.setMaximumSize(new java.awt.Dimension(75, 35));
-        jButtonSearch.setMinimumSize(new java.awt.Dimension(75, 35));
-        jButtonSearch.setPreferredSize(new java.awt.Dimension(75, 35));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        jPanelEditorButtons.add(jButtonSearch, gridBagConstraints);
-
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
@@ -508,10 +553,10 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelEditorTools.add(jPanelEditorToolsFiller, gridBagConstraints);
 
-        jComboBoxGraphicsSelected.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6" }));
-        jComboBoxGraphicsSelected.setMaximumSize(new java.awt.Dimension(120, 22));
-        jComboBoxGraphicsSelected.setMinimumSize(new java.awt.Dimension(120, 22));
-        jComboBoxGraphicsSelected.setPreferredSize(new java.awt.Dimension(120, 22));
+        jComboBoxGraphicsSelected.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-", "Tabla de Tokens", "Arbol Sintactico", "Tabla de Simbolos", "Arbol Semantico", "Codigo Intermedio", "Codigo TAC" }));
+        jComboBoxGraphicsSelected.setMaximumSize(new java.awt.Dimension(150, 22));
+        jComboBoxGraphicsSelected.setMinimumSize(new java.awt.Dimension(150, 22));
+        jComboBoxGraphicsSelected.setPreferredSize(new java.awt.Dimension(150, 22));
         jComboBoxGraphicsSelected.addActionListener(this::jComboBoxGraphicsSelectedActionPerformed);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
@@ -541,19 +586,32 @@ public class main extends javax.swing.JFrame {
 
         jPanelGraphics.setBackground(new java.awt.Color(51, 255, 51));
         jPanelGraphics.setLayout(new java.awt.CardLayout());
-        jPanelGraphics.add(syntaxTreePane1, "syntax_tree");
-        jPanelGraphics.add(tablaSimbolosPanel1, "symbol_table");
-        jPanelGraphics.add(tablaTokenPanel1, "token_table");
-        jPanelGraphics.add(semanticsTreePane1, "semantics_tree");
         jPanelGraphics.add(formaIntermediaPane1, "intermediate_code");
         jPanelGraphics.add(tacPane1, "tac_code");
+        jPanelGraphics.add(arbolSemanticoPanel2, "semantics_tree");
+        jPanelGraphics.add(tablaSimbolosPanel1, "symbol_table");
+        jPanelGraphics.add(tablaDeTokensPanel1, "tokens_table");
+        jPanelGraphics.add(arbolSintacticoPanel1, "syntax_tree");
+
+        javax.swing.GroupLayout jPanelLogoLayout = new javax.swing.GroupLayout(jPanelLogo);
+        jPanelLogo.setLayout(jPanelLogoLayout);
+        jPanelLogoLayout.setHorizontalGroup(
+            jPanelLogoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 587, Short.MAX_VALUE)
+        );
+        jPanelLogoLayout.setVerticalGroup(
+            jPanelLogoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 350, Short.MAX_VALUE)
+        );
+
+        jPanelGraphics.add(jPanelLogo, "logo_panel");
 
         jSplitPanelHorizontal.setRightComponent(jPanelGraphics);
 
         jSplitPanelVertical.setTopComponent(jSplitPanelHorizontal);
 
         jTabbedPaneTerminal.setMaximumSize(new java.awt.Dimension(0, 110));
-        jTabbedPaneTerminal.setMinimumSize(new java.awt.Dimension(0, 55));
+        jTabbedPaneTerminal.setMinimumSize(new java.awt.Dimension(0, 0));
         jTabbedPaneTerminal.setPreferredSize(new java.awt.Dimension(0, 110));
 
         jTextAreaTerminal0.setEditable(false);
@@ -589,6 +647,7 @@ public class main extends javax.swing.JFrame {
         jButtonLogo.setMaximumSize(new java.awt.Dimension(50, 35));
         jButtonLogo.setMinimumSize(new java.awt.Dimension(50, 35));
         jButtonLogo.setPreferredSize(new java.awt.Dimension(50, 35));
+        jButtonLogo.addActionListener(this::jButtonLogoActionPerformed);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weighty = 1.0;
@@ -666,7 +725,7 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelFrameMods.add(jButtonMin, gridBagConstraints);
 
-        jButtonMax.setText("+");
+        jButtonMax.setText("⬜");
         jButtonMax.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 jButtonMaxMouseEntered(evt);
@@ -729,6 +788,8 @@ public class main extends javax.swing.JFrame {
         int x = evt.getXOnScreen();
         int y = evt.getYOnScreen();
         this.setLocation(x - xMouse - jPanelMainTabs.getWidth() - 5, y - yMouse - 5);
+        setExtendedState(java.awt.Frame.NORMAL);
+        jButtonMax.setText("⬜");
     }//GEN-LAST:event_jPanelDraggingPaneMouseDragged
 
     private void jButtonMinMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonMinMouseEntered
@@ -831,9 +892,13 @@ public class main extends javax.swing.JFrame {
                 h = MIN_H;
             }
         }
-
+        
         setBounds(x, y, w, h);
         setResizeCursor(resizeDirection);
+        
+        setExtendedState(java.awt.Frame.NORMAL);
+        jButtonMax.setText("⬜");
+        
     }//GEN-LAST:event_formMouseDragged
 
     private void formMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseMoved
@@ -848,24 +913,24 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_formMouseExited
 
     private void jComboBoxGraphicsSelectedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxGraphicsSelectedActionPerformed
-        java.awt.CardLayout cl = (java.awt.CardLayout) jPanelGraphics.getLayout();
-
-        if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 1")) {
-            cl.show(jPanelGraphics, "token_table");
-        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 2")) {
-            cl.show(jPanelGraphics, "syntax_tree");
-        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 3")) {
-            cl.show(jPanelGraphics, "symbol_table");
-        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 4")) {
-            cl.show(jPanelGraphics, "semantics_tree");
-        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 5")) {
-            cl.show(jPanelGraphics, "intermediate_code");
-        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 6")) {
-            cl.show(jPanelGraphics, "tac_code");
-        }
+        actualizarGrafico();
     }//GEN-LAST:event_jComboBoxGraphicsSelectedActionPerformed
 
     private void jButtonRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRunActionPerformed
+        inicializarTerminal();
+        jSplitPanelVertical.setEnabled(true);
+        jTextAreaTerminal0.setEnabled(true);
+        
+        if (jComboBoxGraphicsSelected.getItemCount() == 1) {
+            jComboBoxGraphicsSelected.addItem("Tabla de Tokens");
+            jComboBoxGraphicsSelected.addItem("Arbol Sintactico");
+            jComboBoxGraphicsSelected.addItem("Tabla de Simbolos");
+            jComboBoxGraphicsSelected.addItem("Arbol Semantico");
+            jComboBoxGraphicsSelected.addItem("Codigo Intermedio");
+            jComboBoxGraphicsSelected.addItem("Codigo TAC");
+            jComboBoxGraphicsSelected.removeItem("-");
+        }
+        
         JTextArea editor = getCurrentEditor();
         if (editor == null) {
             javax.swing.JOptionPane.showMessageDialog(this, "No hay un editor activo.");
@@ -908,7 +973,7 @@ public class main extends javax.swing.JFrame {
             ParseTree tree = parser.programa();
 
             if (!errorListener.hasErrors()) {
-                Analizadorsem visitor = new Analizadorsem(terminal);
+                AnalisisSemantica visitor = new AnalisisSemantica(terminal);
                 visitor.visit(tree);
 
                 if (visitor.getErrores().isEmpty()) {
@@ -917,9 +982,9 @@ public class main extends javax.swing.JFrame {
             }
 
             tablaSimbolosPanel1.actualizarDesdeCodigo(code);
-            tablaTokenPanel1.actualizarTabla(code);
-            syntaxTreePane1.showTreeGui(code);
-            semanticsTreePane1.showTreeGui(code);
+            tablaDeTokensPanel1.actualizarTabla(code);
+            arbolSintacticoPanel1.showTreeGui(code);
+            arbolSemanticoPanel2.showTreeGui(code);
             formaIntermediaPane1.generarYMostrarIR(tree);
             tacPane1.showTAC(code);
 
@@ -927,6 +992,19 @@ public class main extends javax.swing.JFrame {
             appendError(terminal, "Error interno: " + ex.getMessage());
         }
     }//GEN-LAST:event_jButtonRunActionPerformed
+
+    private void jButtonLogoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLogoActionPerformed
+        resetApp();
+    }//GEN-LAST:event_jButtonLogoActionPerformed
+
+    private void formWindowStateChanged(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowStateChanged
+        boolean maximized = (getExtendedState() & java.awt.Frame.MAXIMIZED_BOTH) == java.awt.Frame.MAXIMIZED_BOTH;
+        if (maximized) {
+            jButtonMax.setText("❐");
+        } else {
+            jButtonMax.setText("⬜");
+        }
+    }//GEN-LAST:event_formWindowStateChanged
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -951,14 +1029,15 @@ public class main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private generador_codigoI.FormaIntermediaPane formaIntermediaPane1;
+    private AnalizadorSemantico.ArbolSemanticoPanel arbolSemanticoPanel2;
+    private AnalizadorSintactico.ArbolSintacticoPanel arbolSintacticoPanel1;
+    private CodigoIntermedio.FormaIntermediaPanel formaIntermediaPane1;
     private javax.swing.JButton jButtonClose;
     private javax.swing.JButton jButtonFiles;
     private javax.swing.JButton jButtonLogo;
     private javax.swing.JButton jButtonMax;
     private javax.swing.JButton jButtonMin;
     private javax.swing.JButton jButtonRun;
-    private javax.swing.JButton jButtonSearch;
     private javax.swing.JComboBox<String> jComboBoxGraphicsSelected;
     private javax.swing.JPanel jPanelDraggingPane;
     private javax.swing.JPanel jPanelEditor;
@@ -967,6 +1046,7 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanelEditorToolsFiller;
     private javax.swing.JPanel jPanelFrameMods;
     private javax.swing.JPanel jPanelGraphics;
+    private javax.swing.JPanel jPanelLogo;
     private javax.swing.JPanel jPanelMainTabs;
     private javax.swing.JPanel jPanelTitleBar;
     private javax.swing.JScrollPane jScrollPane1;
@@ -977,10 +1057,8 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPaneTerminal;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jTextAreaTerminal0;
-    private AnalizadorSemantico.SemanticsTreePane semanticsTreePane1;
-    private syntax_tree.SyntaxTreePane syntaxTreePane1;
-    private symbols.TablaSimbolosPanel tablaSimbolosPanel1;
-    private tokens.TablaTokenPanel tablaTokenPanel1;
-    private generador_codigoI.TacPane tacPane1;
+    private TablaDeTokens.TablaDeTokensPanel tablaDeTokensPanel1;
+    private TablaDeSimbolos.TablaDeSimbolosPanel tablaSimbolosPanel1;
+    private CodigoIntermedio.PanelTAC tacPane1;
     // End of variables declaration//GEN-END:variables
 }

@@ -1,4 +1,4 @@
-package symbols;
+package TablaDeSimbolos;
 
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
@@ -9,17 +9,18 @@ import javax.swing.table.DefaultTableModel;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-public class TablaSimbolosPanel extends JPanel {
+public class TablaDeSimbolosPanel extends JPanel {
 
     private final JTable tabla;
-    private final GeneradorTabla listener = new GeneradorTabla();
+    private final DefaultTableModel modelo;
+    private final GeneradorTabla listener;
 
-    public TablaSimbolosPanel() {
+    public TablaDeSimbolosPanel() {
         setLayout(new BorderLayout());
 
         JLabel titulo = new JLabel("Tabla de Símbolos", SwingConstants.CENTER);
 
-        DefaultTableModel modelo = new DefaultTableModel(
+        modelo = new DefaultTableModel(
             new Object[]{"No", "Nombre", "Tipo", "Línea"}, 0
         ) {
             @Override
@@ -29,15 +30,14 @@ public class TablaSimbolosPanel extends JPanel {
         };
 
         tabla = new JTable(modelo);
+        listener = new GeneradorTabla();
 
         add(titulo, BorderLayout.NORTH);
         add(new JScrollPane(tabla), BorderLayout.CENTER);
     }
 
     public void actualizarDesdeCodigo(String codigo) {
-        DefaultTableModel modelo = (DefaultTableModel) tabla.getModel();
         modelo.setRowCount(0);
-
         listener.clear();
 
         CharStream input = CharStreams.fromString(codigo);
@@ -52,7 +52,12 @@ public class TablaSimbolosPanel extends JPanel {
 
         int i = 1;
         for (Simbolo s : simbolos) {
-            modelo.addRow(new Object[]{i++, s.getNombre(), s.getTipo(), s.getLinea()});
+            modelo.addRow(new Object[]{
+                i++,
+                s.getNombre(),
+                s.getTipo(),
+                s.getLinea()
+            });
         }
     }
 

@@ -7,32 +7,129 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import javax.swing.JTextPane;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-public class Analizadorsem extends LenguajeBaseVisitor<Double> {
+public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
 
-    private final Map<String, Double> tabla = new HashMap<>();
-    private final Map<String, String> tipos = new HashMap<>();
+    private static class Simbolo {
+        String nombre;
+        String tipo;
+        Double valor;
+
+        Simbolo(String nombre, String tipo, Double valor) {
+            this.nombre = nombre;
+            this.tipo = tipo;
+            this.valor = valor;
+        }
+    }
+
+    private static class FuncionInfo {
+        String nombre;
+        String tipoRetorno;
+        List<String> tiposParametros;
+
+        FuncionInfo(String nombre, String tipoRetorno, List<String> tiposParametros) {
+            this.nombre = nombre;
+            this.tipoRetorno = tipoRetorno;
+            this.tiposParametros = tiposParametros;
+        }
+    }
+
+    private final Stack<Map<String, Simbolo>> pilaAmbitos = new Stack<>();
+    private final Map<String, FuncionInfo> tablaFunciones = new HashMap<>();
     private final List<String> errores = new ArrayList<>();
     private final JTextPane terminal;
 
-    public Analizadorsem(JTextPane terminal) {
+    private String funcionActual = null;
+    private String tipoRetornoActual = null;
+
+    public AnalisisSemantica(JTextPane terminal) {
         this.terminal = terminal;
+        entrarAmbito();
     }
 
     public Map<String, Double> getTabla() {
-        return tabla;
+        Map<String, Double> tablaPlana = new HashMap<>();
+        if (!pilaAmbitos.isEmpty()) {
+            for (Map<String, Simbolo> ambito : pilaAmbitos) {
+                for (Simbolo s : ambito.values()) {
+                    tablaPlana.put(s.nombre, s.valor);
+                }
+            }
+        }
+        return tablaPlana;
     }
 
     public Map<String, String> getTipos() {
-        return tipos;
+        Map<String, String> tiposPlanos = new HashMap<>();
+        if (!pilaAmbitos.isEmpty()) {
+            for (Map<String, Simbolo> ambito : pilaAmbitos) {
+                for (Simbolo s : ambito.values()) {
+                    tiposPlanos.put(s.nombre, s.tipo);
+                }
+            }
+        }
+        return tiposPlanos;
     }
 
     public List<String> getErrores() {
         return errores;
+    }
+
+    private void entrarAmbito() {
+        pilaAmbitos.push(new HashMap<>());
+    }
+
+    private void salirAmbito() {
+        if (!pilaAmbitos.isEmpty()) {
+            pilaAmbitos.pop();
+        }
+    }
+
+    private Map<String, Simbolo> ambitoActual() {
+        return pilaAmbitos.peek();
+    }
+
+    private boolean existeEnAmbitoActual(String id) {
+        return !pilaAmbitos.isEmpty() && ambitoActual().containsKey(id);
+    }
+
+    private Simbolo buscarSimbolo(String id) {
+        for (int i = pilaAmbitos.size() - 1; i >= 0; i--) {
+            Map<String, Simbolo> ambito = pilaAmbitos.get(i);
+            if (ambito.containsKey(id)) {
+                return ambito.get(id);
+            }
+        }
+        return null;
+    }
+
+    private void declararVariable(String id, String tipo, Double valor) {
+        if (existeEnAmbitoActual(id)) {
+            log("Error semántico: variable ya declarada en este ámbito -> " + id);
+            return;
+        }
+        ambitoActual().put(id, new Simbolo(id, tipo, valor));
+    }
+
+    private void registrarFuncion(String nombre, String tipoRetorno, LenguajeParser.ParametrosContext params) {
+        if (tablaFunciones.containsKey(nombre)) {
+            log("Error semántico: función ya declarada -> " + nombre);
+            return;
+        }
+
+        List<String> tiposParams = new ArrayList<>();
+        if (params != null) {
+            for (LenguajeParser.ParametroContext p : params.parametro()) {
+                tiposParams.add(obtenerTipoDeclarado(p.tipo()));
+            }
+        }
+
+        tablaFunciones.put(nombre, new FuncionInfo(nombre, tipoRetorno, tiposParams));
     }
 
     private void log(String mensaje) {
@@ -74,6 +171,7 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
         if (ctx.REAL() != null) return "real";
         if (ctx.CADENA() != null) return "cadena";
         if (ctx.BOOLEANO() != null) return "booleano";
+        if (ctx.VACIO() != null) return "vacio";
         return "desconocido";
     }
 
@@ -107,15 +205,27 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
         for (int i = 1; i < ctx.mult().size(); i++) {
             String der = inferirTipoMult(ctx.mult(i));
 
-            if ("cadena".equals(tipo) || "cadena".equals(der)
-                    || "booleano".equals(tipo) || "booleano".equals(der)) {
-                return "incompatible";
-            }
-
-            if ("real".equals(tipo) || "real".equals(der)) {
-                tipo = "real";
+            if (ctx.MAS(i - 1) != null) {
+                if ("cadena".equals(tipo) && "cadena".equals(der)) {
+                    tipo = "cadena";
+                } else if ("booleano".equals(tipo) || "booleano".equals(der)
+                        || "cadena".equals(tipo) || "cadena".equals(der)) {
+                    return "incompatible";
+                } else if ("real".equals(tipo) || "real".equals(der)) {
+                    tipo = "real";
+                } else {
+                    tipo = "entero";
+                }
             } else {
-                tipo = "entero";
+                if ("cadena".equals(tipo) || "cadena".equals(der)
+                        || "booleano".equals(tipo) || "booleano".equals(der)) {
+                    return "incompatible";
+                }
+                if ("real".equals(tipo) || "real".equals(der)) {
+                    tipo = "real";
+                } else {
+                    tipo = "entero";
+                }
             }
         }
 
@@ -133,7 +243,9 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
                 return "incompatible";
             }
 
-            if ("real".equals(tipo) || "real".equals(der)) {
+            if (ctx.DIV(i - 1) != null) {
+                tipo = "real";
+            } else if ("real".equals(tipo) || "real".equals(der)) {
                 tipo = "real";
             } else {
                 tipo = "entero";
@@ -168,16 +280,35 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
             return "cadena";
         }
 
+        if (ctx.llamadaFuncion() != null) {
+            return inferirTipoLlamadaFuncion(ctx.llamadaFuncion());
+        }
+
         if (ctx.ID() != null) {
             String id = ctx.ID().getText();
-            return tipos.getOrDefault(id, "desconocido");
+            Simbolo s = buscarSimbolo(id);
+            return s != null ? s.tipo : "desconocido";
         }
 
         if (ctx.e != null) {
             return inferirTipo(ctx.e);
         }
 
+        if (ctx.leer() != null) {
+            return "entero";
+        }
+
         return "desconocido";
+    }
+
+    public String inferirTipoLlamadaFuncion(LenguajeParser.LlamadaFuncionContext ctx) {
+        String nombre = ctx.ID().getText();
+
+        if (!tablaFunciones.containsKey(nombre)) {
+            return "desconocido";
+        }
+
+        return tablaFunciones.get(nombre).tipoRetorno;
     }
 
     private boolean tiposCompatibles(String esperado, String recibido) {
@@ -188,10 +319,120 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
     @Override
     public Double visitPrograma(LenguajeParser.ProgramaContext ctx) {
-        for (LenguajeParser.SentenciaContext s : ctx.sentencia()) {
-            visit(s);
+        for (LenguajeParser.ElementoContext e : ctx.elemento()) {
+            visit(e);
         }
         return 0.0;
+    }
+
+    @Override
+    public Double visitElemento(LenguajeParser.ElementoContext ctx) {
+        if (ctx.sentencia() != null) {
+            return visit(ctx.sentencia());
+        }
+        if (ctx.funcion() != null) {
+            return visit(ctx.funcion());
+        }
+        return 0.0;
+    }
+
+    @Override
+    public Double visitFuncion(LenguajeParser.FuncionContext ctx) {
+        String nombre = ctx.ID().getText();
+        String tipoRetorno = obtenerTipoDeclarado(ctx.tipo());
+
+        registrarFuncion(nombre, tipoRetorno, ctx.parametros());
+
+        String funcionAnterior = funcionActual;
+        String retornoAnterior = tipoRetornoActual;
+
+        funcionActual = nombre;
+        tipoRetornoActual = tipoRetorno;
+
+        entrarAmbito();
+
+        if (ctx.parametros() != null) {
+            for (LenguajeParser.ParametroContext p : ctx.parametros().parametro()) {
+                String tipo = obtenerTipoDeclarado(p.tipo());
+                String id = p.ID().getText();
+                declararVariable(id, tipo, 0.0);
+            }
+        }
+
+        for (LenguajeParser.SentenciaBloqueContext s : ctx.sentenciaBloque()) {
+            visit(s);
+        }
+
+        salirAmbito();
+
+        funcionActual = funcionAnterior;
+        tipoRetornoActual = retornoAnterior;
+
+        return 0.0;
+    }
+
+    @Override
+    public Double visitLlamadaFuncion(LenguajeParser.LlamadaFuncionContext ctx) {
+        String nombre = ctx.ID().getText();
+
+        if (!tablaFunciones.containsKey(nombre)) {
+            log("Error semántico: función no declarada -> " + nombre);
+            return 0.0;
+        }
+
+        FuncionInfo f = tablaFunciones.get(nombre);
+
+        List<LenguajeParser.ExpresionContext> args = new ArrayList<>();
+        if (ctx.argumentos() != null) {
+            args = ctx.argumentos().expresion();
+        }
+
+        if (args.size() != f.tiposParametros.size()) {
+            log("Error semántico: cantidad incorrecta de parámetros en -> " + nombre);
+            return 0.0;
+        }
+
+        for (int i = 0; i < args.size(); i++) {
+            String recibido = inferirTipo(args.get(i));
+            String esperado = f.tiposParametros.get(i);
+
+            if (!tiposCompatibles(esperado, recibido)) {
+                log("Error semántico: parámetro incompatible en función -> "
+                        + nombre + " (esperado " + esperado + ", recibido " + recibido + ")");
+            }
+
+            visit(args.get(i));
+        }
+
+        return 0.0;
+    }
+
+    @Override
+    public Double visitRetornar(LenguajeParser.RetornarContext ctx) {
+        if (tipoRetornoActual == null) {
+            log("Error semántico: retornar fuera de una función");
+            return 0.0;
+        }
+
+        if ("vacio".equals(tipoRetornoActual)) {
+            if (ctx.e != null) {
+                log("Error semántico: función de tipo vacio no debe retornar valor -> " + funcionActual);
+            }
+            return 0.0;
+        }
+
+        if (ctx.e == null) {
+            log("Error semántico: la función debe retornar un valor -> " + funcionActual);
+            return 0.0;
+        }
+
+        String tipoRetornado = inferirTipo(ctx.e);
+        if (!tiposCompatibles(tipoRetornoActual, tipoRetornado)) {
+            log("Error semántico: retorno incompatible en función -> "
+                    + funcionActual + " (" + tipoRetornoActual + " = " + tipoRetornado + ")");
+        }
+
+        return visit(ctx.e);
     }
 
     @Override
@@ -201,9 +442,11 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
     @Override
     public Double visitBloque(LenguajeParser.BloqueContext ctx) {
+        entrarAmbito();
         for (LenguajeParser.SentenciaBloqueContext s : ctx.sentenciaBloque()) {
             visit(s);
         }
+        salirAmbito();
         return 0.0;
     }
 
@@ -217,12 +460,12 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
         String id = ctx.ID().getText();
         String tipoDeclarado = obtenerTipoDeclarado(ctx.tipo());
 
-        if (tabla.containsKey(id)) {
+        if (existeEnAmbitoActual(id)) {
             log("Error semántico: variable ya declarada -> " + id);
             return 0.0;
         }
 
-        double valor = 0.0;
+        Double valor = 0.0;
 
         if (ctx.e != null) {
             String tipoExpresion = inferirTipo(ctx.e);
@@ -230,27 +473,28 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
             if (!tiposCompatibles(tipoDeclarado, tipoExpresion)) {
                 log("Error semántico: Asignación de tipos incompatibles -> "
                         + id + " (" + tipoDeclarado + " = " + tipoExpresion + ")");
+                declararVariable(id, tipoDeclarado, 0.0);
                 return 0.0;
             }
 
             valor = visit(ctx.e);
         }
 
-        tabla.put(id, valor);
-        tipos.put(id, tipoDeclarado);
+        declararVariable(id, tipoDeclarado, valor);
         return valor;
     }
 
     @Override
     public Double visitAsignacion(LenguajeParser.AsignacionContext ctx) {
         String id = ctx.ID().getText();
+        Simbolo s = buscarSimbolo(id);
 
-        if (!tabla.containsKey(id)) {
+        if (s == null) {
             log("Error semántico: variable no declarada -> " + id);
             return 0.0;
         }
 
-        String tipoVariable = tipos.get(id);
+        String tipoVariable = s.tipo;
         String tipoExpresion = inferirTipo(ctx.expresion());
 
         if (!tiposCompatibles(tipoVariable, tipoExpresion)) {
@@ -260,7 +504,7 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
         }
 
         double valor = visit(ctx.expresion());
-        tabla.put(id, valor);
+        s.valor = valor;
         return valor;
     }
 
@@ -271,11 +515,16 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
     @Override
     public Double visitSi(LenguajeParser.SiContext ctx) {
-        double condicion = visit(ctx.expresion());
-        visit(ctx.bloque(0));
+        String tipoCond = inferirTipo(ctx.c);
+        if (!"booleano".equals(tipoCond)) {
+            log("Error semántico: la condición de 'si' debe ser booleana");
+        }
 
-        if (ctx.bloque().size() > 1) {
-            visit(ctx.bloque(1));
+        double condicion = visit(ctx.c);
+        visit(ctx.b1);
+
+        if (ctx.b2 != null) {
+            visit(ctx.b2);
         }
 
         return condicion;
@@ -283,8 +532,13 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
     @Override
     public Double visitMientras(LenguajeParser.MientrasContext ctx) {
-        double condicion = visit(ctx.expresion());
-        visit(ctx.bloque());
+        String tipoCond = inferirTipo(ctx.c);
+        if (!"booleano".equals(tipoCond)) {
+            log("Error semántico: la condición de 'mientras' debe ser booleana");
+        }
+
+        double condicion = visit(ctx.c);
+        visit(ctx.b);
         return condicion;
     }
 
@@ -428,15 +682,24 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
             return 0.0;
         }
 
+        if (ctx.llamadaFuncion() != null) {
+            return visit(ctx.llamadaFuncion());
+        }
+
+        if (ctx.leer() != null) {
+            return 0.0;
+        }
+
         if (ctx.ID() != null) {
             String id = ctx.ID().getText();
+            Simbolo s = buscarSimbolo(id);
 
-            if (!tabla.containsKey(id)) {
+            if (s == null) {
                 log("Error semántico: variable no definida -> " + id);
                 return 0.0;
             }
 
-            return tabla.get(id);
+            return s.valor != null ? s.valor : 0.0;
         }
 
         if (ctx.e != null) {
