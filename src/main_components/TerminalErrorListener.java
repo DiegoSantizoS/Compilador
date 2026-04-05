@@ -1,18 +1,40 @@
 package main_components;
 
-import javax.swing.JTextArea;
-import org.antlr.v4.runtime.*;
+import java.awt.Color;
+import javax.swing.JTextPane;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 
 public class TerminalErrorListener extends BaseErrorListener {
-    private final JTextArea terminal;
+    private final JTextPane terminal;
     private boolean hasErrors = false;
 
-    public TerminalErrorListener(JTextArea terminal) {
+    public TerminalErrorListener(JTextPane terminal) {
         this.terminal = terminal;
     }
 
     public boolean hasErrors() {
         return hasErrors;
+    }
+
+    private void logError(String mensaje) {
+        if (terminal != null) {
+            StyledDocument doc = terminal.getStyledDocument();
+            Style errorStyle = terminal.addStyle("SyntaxErrorStyle", null);
+            StyleConstants.setForeground(errorStyle, Color.RED);
+
+            try {
+                doc.insertString(doc.getLength(), mensaje + "\n", errorStyle);
+            } catch (Exception e) {
+                System.out.println(mensaje);
+            }
+        } else {
+            System.out.println(mensaje);
+        }
     }
 
     @Override
@@ -25,6 +47,6 @@ public class TerminalErrorListener extends BaseErrorListener {
             RecognitionException e) {
 
         hasErrors = true;
-        terminal.append("Error [line " + line + ":" + charPositionInLine + "] " + msg + "\n");
+        logError("Error [line " + line + ":" + charPositionInLine + "] " + msg);
     }
 }
