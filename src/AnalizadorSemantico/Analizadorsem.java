@@ -14,8 +14,10 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
     Map<String, Double> tabla = new HashMap<>();
 
+    private JTextArea terminal;
+
     public Analizadorsem(JTextArea terminal) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        this.terminal = terminal;
     }
 
     @Override
