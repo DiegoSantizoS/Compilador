@@ -1,6 +1,7 @@
 package main_frame;
 //@author DFSS
 
+import AnalizadorSemantico.Analizadorsem;
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.awt.Color;
@@ -19,8 +20,10 @@ import main_components.TerminalErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 public class main extends javax.swing.JFrame {
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(main.class.getName());
     private javax.swing.JPopupMenu popupFiles;
     private javax.swing.JMenuItem itemNuevo, itemAbrir, itemGuardar, itemGuardarComo;
@@ -36,22 +39,21 @@ public class main extends javax.swing.JFrame {
     private java.awt.Point resizeStartScreen;
     private java.awt.Rectangle frameStartBounds;
     private int resizeDirection = RESIZE_NONE;
-    
+
     private final Map<java.awt.Component, File> tabFiles = new HashMap<>();
     private int nuevoContador = 1;
     private JTextArea terminalUnica;
-    
-    
+
     public main() {
         setUndecorated(true);
         initComponents();
         configurarTabsCerrables();
         crearPopupArchivo();
         jSplitPanelVertical.setDividerLocation(1.0);
-        
+
         inicializarTerminal();
     }
-    
+
     private void inicializarTerminal() {
         terminalUnica = new JTextArea();
         terminalUnica.setEditable(false);
@@ -62,10 +64,10 @@ public class main extends javax.swing.JFrame {
         jTabbedPaneTerminal.addTab("Terminal", scrollPane);
         jTabbedPaneTerminal.setSelectedComponent(scrollPane);
     }
-    
+
     private JTextArea nuevaTerminal() {
         if (terminalUnica == null) {
-        inicializarTerminal();
+            inicializarTerminal();
         }
 
         int editorIndex = jTabbedEditorPanel.getSelectedIndex();
@@ -81,16 +83,15 @@ public class main extends javax.swing.JFrame {
 
         return terminalUnica;
     }
-    
+
     private void configurarTabsCerrables() {
         for (int i = 0; i < jTabbedEditorPanel.getTabCount(); i++) {
             jTabbedEditorPanel.setTabComponentAt(i, new ClosableTabComponent(jTabbedEditorPanel));
         }
-        
-        //jTabbedPaneTerminal
 
+        //jTabbedPaneTerminal
     }
-    
+
     private void crearPopupArchivo() {
         popupFiles = new javax.swing.JPopupMenu();
         popupFiles.setOpaque(true);
@@ -103,12 +104,12 @@ public class main extends javax.swing.JFrame {
         itemAbrir = new javax.swing.JMenuItem("Abrir");
         itemGuardar = new javax.swing.JMenuItem("Guardar");
         itemGuardarComo = new javax.swing.JMenuItem("Guardar Como");
-        
+
         estilizarMenuItem(itemNuevo);
         estilizarMenuItem(itemAbrir);
         estilizarMenuItem(itemGuardar);
         estilizarMenuItem(itemGuardarComo);
-        
+
         itemNuevo.addActionListener(e -> nuevoArchivo());
 
         itemAbrir.addActionListener(e -> abrirArchivo());
@@ -122,7 +123,7 @@ public class main extends javax.swing.JFrame {
         popupFiles.add(itemGuardar);
         popupFiles.add(itemGuardarComo);
     }
-    
+
     private void nuevoArchivo() {
         JTextArea textArea = new JTextArea();
         JScrollPane scrollPane = new JScrollPane(textArea);
@@ -164,10 +165,10 @@ public class main extends javax.swing.JFrame {
 
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(
-                this,
-                "No se pudo abrir el archivo:\n" + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE
+                    this,
+                    "No se pudo abrir el archivo:\n" + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
             );
         }
     }
@@ -197,10 +198,10 @@ public class main extends javax.swing.JFrame {
             javax.swing.JOptionPane.showMessageDialog(this, "Archivo guardado.");
         } catch (IOException ex) {
             javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "No se pudo guardar el archivo:\n" + ex.getMessage(),
-                "Error",
-                javax.swing.JOptionPane.ERROR_MESSAGE
+                    this,
+                    "No se pudo guardar el archivo:\n" + ex.getMessage(),
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
             );
         }
     }
@@ -232,17 +233,17 @@ public class main extends javax.swing.JFrame {
 
             tabFiles.put(tabActual, file);
             jTabbedEditorPanel.setTitleAt(
-                jTabbedEditorPanel.getSelectedIndex(),
-                file.getName()
+                    jTabbedEditorPanel.getSelectedIndex(),
+                    file.getName()
             );
 
             javax.swing.JOptionPane.showMessageDialog(this, "Archivo guardado.");
         } catch (IOException ex) {
             javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "No se pudo guardar el archivo:\n" + ex.getMessage(),
-                "Error",
-                javax.swing.JOptionPane.ERROR_MESSAGE
+                    this,
+                    "No se pudo guardar el archivo:\n" + ex.getMessage(),
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
             );
         }
     }
@@ -260,7 +261,7 @@ public class main extends javax.swing.JFrame {
 
         return null;
     }
-    
+
     private void estilizarMenuItem(javax.swing.JMenuItem item) {
         java.awt.Dimension menuSize = new java.awt.Dimension(150, 30);
 
@@ -272,7 +273,7 @@ public class main extends javax.swing.JFrame {
         item.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         item.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
     }
-    
+
     private int getResizeDirection(int x, int y) {
         int width = getWidth();
         int height = getHeight();
@@ -284,10 +285,18 @@ public class main extends javax.swing.JFrame {
 
         int dir = RESIZE_NONE;
 
-        if (north) dir |= RESIZE_N;
-        if (south) dir |= RESIZE_S;
-        if (west) dir |= RESIZE_W;
-        if (east) dir |= RESIZE_E;
+        if (north) {
+            dir |= RESIZE_N;
+        }
+        if (south) {
+            dir |= RESIZE_S;
+        }
+        if (west) {
+            dir |= RESIZE_W;
+        }
+        if (east) {
+            dir |= RESIZE_E;
+        }
 
         return dir;
     }
@@ -329,7 +338,7 @@ public class main extends javax.swing.JFrame {
             setCursor(cursor);
         }
     }
-    
+
     private JTextArea getCurrentEditor() {
         java.awt.Component selected = jTabbedEditorPanel.getSelectedComponent();
 
@@ -343,7 +352,7 @@ public class main extends javax.swing.JFrame {
 
         return null;
     }
-    
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -745,7 +754,7 @@ public class main extends javax.swing.JFrame {
 
     private void formMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseDragged
         if (resizeDirection == RESIZE_NONE || resizeStartScreen == null || frameStartBounds == null) {
-        return;
+            return;
         }
 
         java.awt.Point current = evt.getLocationOnScreen();
@@ -798,7 +807,7 @@ public class main extends javax.swing.JFrame {
 
     private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
         if (resizeDirection == RESIZE_NONE) {
-        setCursor(java.awt.Cursor.getDefaultCursor());
+            setCursor(java.awt.Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_formMouseExited
 
@@ -829,14 +838,13 @@ public class main extends javax.swing.JFrame {
         }
 
         //terminal.setText("");
-        
         int editorIndex = jTabbedEditorPanel.getSelectedIndex();
         String nombreEditor = "Sin archivo";
 
         if (editorIndex != -1) {
             nombreEditor = jTabbedEditorPanel.getTitleAt(editorIndex);
         }
-        
+
         jSplitPanelVertical.setDividerLocation(0.7);
         terminal.append("Compilando " + nombreEditor + "...\n");
 
@@ -856,10 +864,13 @@ public class main extends javax.swing.JFrame {
             lexer.addErrorListener(errorListener);
             parser.addErrorListener(errorListener);
 
-            parser.programa(); 
+            ParseTree tree = parser.programa();
 
             if (!errorListener.hasErrors()) {
-                terminal.append("Compilación finalizada sin errores.\n");
+                Analizadorsem visitor = new Analizadorsem(terminal);
+                visitor.visit(tree);
+
+                terminal.append("Ejecución finalizada sin errores.\n");
             }
 
             tablaSimbolosPanel1.actualizarDesdeCodigo(code);
