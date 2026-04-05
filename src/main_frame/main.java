@@ -15,6 +15,10 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import main_components.ClosableTabComponent;
 import main_components.TerminalErrorListener;
@@ -43,8 +47,8 @@ public class main extends javax.swing.JFrame {
 
     private final Map<java.awt.Component, File> tabFiles = new HashMap<>();
     private int nuevoContador = 1;
-    private JTextArea terminalUnica;
-
+    private JTextPane terminalUnica;
+    
     public main() {
         setUndecorated(true);
         initComponents();
@@ -56,7 +60,7 @@ public class main extends javax.swing.JFrame {
     }
 
     private void inicializarTerminal() {
-        terminalUnica = new JTextArea();
+        terminalUnica = new JTextPane();
         terminalUnica.setEditable(false);
 
         JScrollPane scrollPane = new JScrollPane(terminalUnica);
@@ -66,7 +70,7 @@ public class main extends javax.swing.JFrame {
         jTabbedPaneTerminal.setSelectedComponent(scrollPane);
     }
 
-    private JTextArea nuevaTerminal() {
+    private JTextPane nuevaTerminal() {
         if (terminalUnica == null) {
             inicializarTerminal();
         }
@@ -83,6 +87,31 @@ public class main extends javax.swing.JFrame {
         jTabbedPaneTerminal.setSelectedIndex(0);
 
         return terminalUnica;
+    }
+    
+    private void appendTerminal(JTextPane terminal, String mensaje, Color color) {
+        if (terminal == null) {
+            System.out.println(mensaje);
+            return;
+        }
+
+        StyledDocument doc = terminal.getStyledDocument();
+        Style style = terminal.addStyle("color_" + color.getRGB(), null);
+        StyleConstants.setForeground(style, color);
+
+        try {
+            doc.insertString(doc.getLength(), mensaje + "\n", style);
+        } catch (Exception e) {
+            System.out.println(mensaje);
+        }
+    }
+
+    private void appendNormal(JTextPane terminal, String mensaje) {
+        appendTerminal(terminal, mensaje, Color.BLACK);
+    }
+
+    private void appendError(JTextPane terminal, String mensaje) {
+        appendTerminal(terminal, mensaje, Color.RED);
     }
 
     private void configurarTabsCerrables() {
@@ -376,6 +405,8 @@ public class main extends javax.swing.JFrame {
         tablaSimbolosPanel1 = new symbols.TablaSimbolosPanel();
         tablaTokenPanel1 = new tokens.TablaTokenPanel();
         semanticsTreePane1 = new AnalizadorSemantico.SemanticsTreePane();
+        formaIntermediaPane1 = new generador_codigoI.FormaIntermediaPane();
+        tacPane1 = new generador_codigoI.TacPane();
         jTabbedPaneTerminal = new javax.swing.JTabbedPane();
         jScrollPanelTerminal0 = new javax.swing.JScrollPane();
         jTextAreaTerminal0 = new javax.swing.JTextArea();
@@ -477,7 +508,7 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelEditorTools.add(jPanelEditorToolsFiller, gridBagConstraints);
 
-        jComboBoxGraphicsSelected.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jComboBoxGraphicsSelected.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6" }));
         jComboBoxGraphicsSelected.setMaximumSize(new java.awt.Dimension(120, 22));
         jComboBoxGraphicsSelected.setMinimumSize(new java.awt.Dimension(120, 22));
         jComboBoxGraphicsSelected.setPreferredSize(new java.awt.Dimension(120, 22));
@@ -514,6 +545,8 @@ public class main extends javax.swing.JFrame {
         jPanelGraphics.add(tablaSimbolosPanel1, "symbol_table");
         jPanelGraphics.add(tablaTokenPanel1, "token_table");
         jPanelGraphics.add(semanticsTreePane1, "semantics_tree");
+        jPanelGraphics.add(formaIntermediaPane1, "intermediate_code");
+        jPanelGraphics.add(tacPane1, "tac_code");
 
         jSplitPanelHorizontal.setRightComponent(jPanelGraphics);
 
@@ -825,6 +858,10 @@ public class main extends javax.swing.JFrame {
             cl.show(jPanelGraphics, "symbol_table");
         } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 4")) {
             cl.show(jPanelGraphics, "semantics_tree");
+        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 5")) {
+            cl.show(jPanelGraphics, "intermediate_code");
+        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 6")) {
+            cl.show(jPanelGraphics, "tac_code");
         }
     }//GEN-LAST:event_jComboBoxGraphicsSelectedActionPerformed
 
@@ -837,12 +874,11 @@ public class main extends javax.swing.JFrame {
 
         String code = editor.getText();
 
-        JTextArea terminal = nuevaTerminal();
+        JTextPane terminal = nuevaTerminal();
         if (terminal == null) {
             return;
         }
 
-        //terminal.setText("");
         int editorIndex = jTabbedEditorPanel.getSelectedIndex();
         String nombreEditor = "Sin archivo";
 
@@ -851,7 +887,7 @@ public class main extends javax.swing.JFrame {
         }
 
         jSplitPanelVertical.setDividerLocation(0.7);
-        terminal.append("Compilando " + nombreEditor + "...\n");
+        appendNormal(terminal, "Compilando " + nombreEditor + "...");
 
         try {
             CharStream input = CharStreams.fromString(code);
@@ -875,17 +911,20 @@ public class main extends javax.swing.JFrame {
                 Analizadorsem visitor = new Analizadorsem(terminal);
                 visitor.visit(tree);
 
-                terminal.append("Ejecución finalizada sin errores.\n");
+                if (visitor.getErrores().isEmpty()) {
+                    appendNormal(terminal, "Ejecución finalizada sin errores.");
+                }
             }
 
-           tablaSimbolosPanel1.actualizarDesdeCodigo(code);
-           tablaTokenPanel1.actualizarTabla(code);
-           syntaxTreePane1.showTreeGui(code);
-           semanticsTreePane1.showTreeGui(code);
-           
+            tablaSimbolosPanel1.actualizarDesdeCodigo(code);
+            tablaTokenPanel1.actualizarTabla(code);
+            syntaxTreePane1.showTreeGui(code);
+            semanticsTreePane1.showTreeGui(code);
+            formaIntermediaPane1.generarYMostrarIR(tree);
+            tacPane1.showTAC(code);
 
         } catch (Exception ex) {
-            terminal.append("Error interno: " + ex.getMessage() + "\n");
+            appendError(terminal, "Error interno: " + ex.getMessage());
         }
     }//GEN-LAST:event_jButtonRunActionPerformed
 
@@ -912,6 +951,7 @@ public class main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private generador_codigoI.FormaIntermediaPane formaIntermediaPane1;
     private javax.swing.JButton jButtonClose;
     private javax.swing.JButton jButtonFiles;
     private javax.swing.JButton jButtonLogo;
@@ -941,5 +981,6 @@ public class main extends javax.swing.JFrame {
     private syntax_tree.SyntaxTreePane syntaxTreePane1;
     private symbols.TablaSimbolosPanel tablaSimbolosPanel1;
     private tokens.TablaTokenPanel tablaTokenPanel1;
+    private generador_codigoI.TacPane tacPane1;
     // End of variables declaration//GEN-END:variables
 }
