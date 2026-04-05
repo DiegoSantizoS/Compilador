@@ -59,6 +59,7 @@ public class main extends javax.swing.JFrame {
         jComboBoxGraphicsSelected.removeAllItems();
         jComboBoxGraphicsSelected.addItem("-");
         jComboBoxGraphicsSelected.setEditable(false);
+        jComboBoxGraphicsSelected.setEnabled(false);
         jTextAreaTerminal0.removeAll();
         jSplitPanelVertical.setEnabled(false);
         jTextAreaTerminal0.setEnabled(false);
@@ -78,6 +79,7 @@ public class main extends javax.swing.JFrame {
         jComboBoxGraphicsSelected.removeAllItems();
         jComboBoxGraphicsSelected.addItem("-");
         jComboBoxGraphicsSelected.setSelectedIndex(0);
+        jComboBoxGraphicsSelected.setEnabled(false);
         java.awt.CardLayout cl = (java.awt.CardLayout) jPanelGraphics.getLayout();
         cl.show(jPanelGraphics, "logo_panel");
     }
@@ -918,6 +920,7 @@ public class main extends javax.swing.JFrame {
 
     private void jButtonRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRunActionPerformed
         inicializarTerminal();
+        
         jSplitPanelVertical.setEnabled(true);
         jTextAreaTerminal0.setEnabled(true);
         
@@ -930,6 +933,7 @@ public class main extends javax.swing.JFrame {
             jComboBoxGraphicsSelected.addItem("Codigo TAC");
             jComboBoxGraphicsSelected.removeItem("-");
         }
+        jComboBoxGraphicsSelected.setEnabled(true);
         
         JTextArea editor = getCurrentEditor();
         if (editor == null) {
