@@ -253,6 +253,20 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.DesignCardLayout"/>
               <SubComponents>
+                <Component class="syntax_tree.SyntaxTreePane" name="syntaxTreePane1">
+                  <Constraints>
+                    <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignCardLayout" value="org.netbeans.modules.form.compat2.layouts.DesignCardLayout$CardConstraintsDescription">
+                      <CardConstraints cardName="syntax_tree"/>
+                    </Constraint>
+                  </Constraints>
+                </Component>
+                <Component class="symbols.TablaSimbolosPanel" name="tablaSimbolosPanel1">
+                  <Constraints>
+                    <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignCardLayout" value="org.netbeans.modules.form.compat2.layouts.DesignCardLayout$CardConstraintsDescription">
+                      <CardConstraints cardName="symbol_table"/>
+                    </Constraint>
+                  </Constraints>
+                </Component>
                 <Component class="tokens.TablaTokenPanel" name="tablaTokenPanel1">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignCardLayout" value="org.netbeans.modules.form.compat2.layouts.DesignCardLayout$CardConstraintsDescription">
@@ -260,10 +274,10 @@
                     </Constraint>
                   </Constraints>
                 </Component>
-                <Component class="syntax_tree.SyntaxTreePane" name="syntaxTreePane1">
+                <Component class="AnalizadorSemantico.SemanticsTreePane" name="semanticsTreePane1">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignCardLayout" value="org.netbeans.modules.form.compat2.layouts.DesignCardLayout$CardConstraintsDescription">
-                      <CardConstraints cardName="syntax_tree"/>
+                      <CardConstraints cardName="semantics_tree"/>
                     </Constraint>
                   </Constraints>
                 </Component>

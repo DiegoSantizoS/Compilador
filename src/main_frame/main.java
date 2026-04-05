@@ -15,6 +15,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import main_components.ClosableTabComponent;
 import main_components.TerminalErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -371,9 +372,10 @@ public class main extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jPanelGraphics = new javax.swing.JPanel();
-        tablaTokenPanel1 = new tokens.TablaTokenPanel();
         syntaxTreePane1 = new syntax_tree.SyntaxTreePane();
         tablaSimbolosPanel1 = new symbols.TablaSimbolosPanel();
+        tablaTokenPanel1 = new tokens.TablaTokenPanel();
+        semanticsTreePane1 = new AnalizadorSemantico.SemanticsTreePane();
         jTabbedPaneTerminal = new javax.swing.JTabbedPane();
         jScrollPanelTerminal0 = new javax.swing.JScrollPane();
         jTextAreaTerminal0 = new javax.swing.JTextArea();
@@ -508,9 +510,10 @@ public class main extends javax.swing.JFrame {
 
         jPanelGraphics.setBackground(new java.awt.Color(51, 255, 51));
         jPanelGraphics.setLayout(new java.awt.CardLayout());
-        jPanelGraphics.add(tablaTokenPanel1, "token_table");
         jPanelGraphics.add(syntaxTreePane1, "syntax_tree");
         jPanelGraphics.add(tablaSimbolosPanel1, "symbol_table");
+        jPanelGraphics.add(tablaTokenPanel1, "token_table");
+        jPanelGraphics.add(semanticsTreePane1, "semantics_tree");
 
         jSplitPanelHorizontal.setRightComponent(jPanelGraphics);
 
@@ -820,6 +823,8 @@ public class main extends javax.swing.JFrame {
             cl.show(jPanelGraphics, "syntax_tree");
         } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 3")) {
             cl.show(jPanelGraphics, "symbol_table");
+        } else if (jComboBoxGraphicsSelected.getSelectedItem().equals("Item 4")) {
+            cl.show(jPanelGraphics, "semantics_tree");
         }
     }//GEN-LAST:event_jComboBoxGraphicsSelectedActionPerformed
 
@@ -873,9 +878,11 @@ public class main extends javax.swing.JFrame {
                 terminal.append("Ejecución finalizada sin errores.\n");
             }
 
-            tablaSimbolosPanel1.actualizarDesdeCodigo(code);
-            tablaTokenPanel1.actualizarTabla(code);
-            syntaxTreePane1.showTreeGui(code);
+           tablaSimbolosPanel1.actualizarDesdeCodigo(code);
+           tablaTokenPanel1.actualizarTabla(code);
+           syntaxTreePane1.showTreeGui(code);
+           semanticsTreePane1.showTreeGui(code);
+           
 
         } catch (Exception ex) {
             terminal.append("Error interno: " + ex.getMessage() + "\n");
@@ -930,6 +937,7 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPaneTerminal;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jTextAreaTerminal0;
+    private AnalizadorSemantico.SemanticsTreePane semanticsTreePane1;
     private syntax_tree.SyntaxTreePane syntaxTreePane1;
     private symbols.TablaSimbolosPanel tablaSimbolosPanel1;
     private tokens.TablaTokenPanel tablaTokenPanel1;
