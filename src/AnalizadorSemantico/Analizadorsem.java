@@ -2,24 +2,33 @@ package AnalizadorSemantico;
 
 import generated.LenguajeBaseVisitor;
 import generated.LenguajeParser;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
     private final Map<String, Double> tabla = new HashMap<>();
+    private final Map<String, String> tipos = new HashMap<>();
     private final List<String> errores = new ArrayList<>();
-    private final JTextArea terminal;
+    private final JTextPane terminal;
 
-    public Analizadorsem(JTextArea terminal) {
+    public Analizadorsem(JTextPane terminal) {
         this.terminal = terminal;
     }
 
     public Map<String, Double> getTabla() {
         return tabla;
+    }
+
+    public Map<String, String> getTipos() {
+        return tipos;
     }
 
     public List<String> getErrores() {
@@ -30,10 +39,151 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
         errores.add(mensaje);
 
         if (terminal != null) {
-            terminal.append(mensaje + "\n");
+            StyledDocument doc = terminal.getStyledDocument();
+            Style errorStyle = terminal.addStyle("ErrorStyle", null);
+            StyleConstants.setForeground(errorStyle, Color.RED);
+
+            try {
+                doc.insertString(doc.getLength(), mensaje + "\n", errorStyle);
+            } catch (Exception e) {
+                System.out.println(mensaje);
+            }
         } else {
             System.out.println(mensaje);
         }
+    }
+
+    public void logNormal(String mensaje) {
+        if (terminal != null) {
+            StyledDocument doc = terminal.getStyledDocument();
+            Style normalStyle = terminal.addStyle("NormalStyle", null);
+            StyleConstants.setForeground(normalStyle, Color.BLACK);
+
+            try {
+                doc.insertString(doc.getLength(), mensaje + "\n", normalStyle);
+            } catch (Exception e) {
+                System.out.println(mensaje);
+            }
+        } else {
+            System.out.println(mensaje);
+        }
+    }
+
+    private String obtenerTipoDeclarado(LenguajeParser.TipoContext ctx) {
+        if (ctx.ENTERO() != null) return "entero";
+        if (ctx.REAL() != null) return "real";
+        if (ctx.CADENA() != null) return "cadena";
+        if (ctx.BOOLEANO() != null) return "booleano";
+        return "desconocido";
+    }
+
+    public String inferirTipo(LenguajeParser.ExpresionContext ctx) {
+        return inferirTipoOr(ctx.o);
+    }
+
+    private String inferirTipoOr(LenguajeParser.OrExprContext ctx) {
+        if (ctx.andExpr().size() > 1) return "booleano";
+        return inferirTipoAnd(ctx.andExpr(0));
+    }
+
+    private String inferirTipoAnd(LenguajeParser.AndExprContext ctx) {
+        if (ctx.igualdad().size() > 1) return "booleano";
+        return inferirTipoIgualdad(ctx.igualdad(0));
+    }
+
+    private String inferirTipoIgualdad(LenguajeParser.IgualdadContext ctx) {
+        if (ctx.comparacion().size() > 1) return "booleano";
+        return inferirTipoComparacion(ctx.comparacion(0));
+    }
+
+    private String inferirTipoComparacion(LenguajeParser.ComparacionContext ctx) {
+        if (ctx.suma().size() > 1) return "booleano";
+        return inferirTipoSuma(ctx.suma(0));
+    }
+
+    private String inferirTipoSuma(LenguajeParser.SumaContext ctx) {
+        String tipo = inferirTipoMult(ctx.mult(0));
+
+        for (int i = 1; i < ctx.mult().size(); i++) {
+            String der = inferirTipoMult(ctx.mult(i));
+
+            if ("cadena".equals(tipo) || "cadena".equals(der)
+                    || "booleano".equals(tipo) || "booleano".equals(der)) {
+                return "incompatible";
+            }
+
+            if ("real".equals(tipo) || "real".equals(der)) {
+                tipo = "real";
+            } else {
+                tipo = "entero";
+            }
+        }
+
+        return tipo;
+    }
+
+    private String inferirTipoMult(LenguajeParser.MultContext ctx) {
+        String tipo = inferirTipoUnario(ctx.unario(0));
+
+        for (int i = 1; i < ctx.unario().size(); i++) {
+            String der = inferirTipoUnario(ctx.unario(i));
+
+            if ("cadena".equals(tipo) || "cadena".equals(der)
+                    || "booleano".equals(tipo) || "booleano".equals(der)) {
+                return "incompatible";
+            }
+
+            if ("real".equals(tipo) || "real".equals(der)) {
+                tipo = "real";
+            } else {
+                tipo = "entero";
+            }
+        }
+
+        return tipo;
+    }
+
+    private String inferirTipoUnario(LenguajeParser.UnarioContext ctx) {
+        if (ctx.primario() != null) {
+            return inferirTipoPrimario(ctx.primario());
+        }
+
+        if (ctx.NO() != null) {
+            return "booleano";
+        }
+
+        return inferirTipoUnario(ctx.u);
+    }
+
+    private String inferirTipoPrimario(LenguajeParser.PrimarioContext ctx) {
+        if (ctx.NUMERO() != null) {
+            return ctx.NUMERO().getText().contains(".") ? "real" : "entero";
+        }
+
+        if (ctx.VERDADERO() != null || ctx.FALSO() != null) {
+            return "booleano";
+        }
+
+        if (ctx.CADENA_LIT() != null) {
+            return "cadena";
+        }
+
+        if (ctx.ID() != null) {
+            String id = ctx.ID().getText();
+            return tipos.getOrDefault(id, "desconocido");
+        }
+
+        if (ctx.e != null) {
+            return inferirTipo(ctx.e);
+        }
+
+        return "desconocido";
+    }
+
+    private boolean tiposCompatibles(String esperado, String recibido) {
+        if (esperado.equals(recibido)) return true;
+        if ("real".equals(esperado) && "entero".equals(recibido)) return true;
+        return false;
     }
 
     @Override
@@ -65,6 +215,7 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
     @Override
     public Double visitDeclaracion(LenguajeParser.DeclaracionContext ctx) {
         String id = ctx.ID().getText();
+        String tipoDeclarado = obtenerTipoDeclarado(ctx.tipo());
 
         if (tabla.containsKey(id)) {
             log("Error semántico: variable ya declarada -> " + id);
@@ -74,10 +225,19 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
         double valor = 0.0;
 
         if (ctx.e != null) {
+            String tipoExpresion = inferirTipo(ctx.e);
+
+            if (!tiposCompatibles(tipoDeclarado, tipoExpresion)) {
+                log("Error semántico: Asignación de tipos incompatibles -> "
+                        + id + " (" + tipoDeclarado + " = " + tipoExpresion + ")");
+                return 0.0;
+            }
+
             valor = visit(ctx.e);
         }
 
         tabla.put(id, valor);
+        tipos.put(id, tipoDeclarado);
         return valor;
     }
 
@@ -87,6 +247,15 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
 
         if (!tabla.containsKey(id)) {
             log("Error semántico: variable no declarada -> " + id);
+            return 0.0;
+        }
+
+        String tipoVariable = tipos.get(id);
+        String tipoExpresion = inferirTipo(ctx.expresion());
+
+        if (!tiposCompatibles(tipoVariable, tipoExpresion)) {
+            log("Error semántico: Asignación de tipos incompatibles -> "
+                    + id + " (" + tipoVariable + " = " + tipoExpresion + ")");
             return 0.0;
         }
 
@@ -103,7 +272,6 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
     @Override
     public Double visitSi(LenguajeParser.SiContext ctx) {
         double condicion = visit(ctx.expresion());
-
         visit(ctx.bloque(0));
 
         if (ctx.bloque().size() > 1) {
@@ -246,6 +414,18 @@ public class Analizadorsem extends LenguajeBaseVisitor<Double> {
     public Double visitPrimario(LenguajeParser.PrimarioContext ctx) {
         if (ctx.NUMERO() != null) {
             return Double.parseDouble(ctx.NUMERO().getText());
+        }
+
+        if (ctx.VERDADERO() != null) {
+            return 1.0;
+        }
+
+        if (ctx.FALSO() != null) {
+            return 0.0;
+        }
+
+        if (ctx.CADENA_LIT() != null) {
+            return 0.0;
         }
 
         if (ctx.ID() != null) {
