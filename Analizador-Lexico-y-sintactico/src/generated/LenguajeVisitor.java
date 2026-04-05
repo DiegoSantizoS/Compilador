@@ -1,4 +1,4 @@
-// Generated from C:/Users/User/Documents/NetBeansProjects/Analizador-Lexico-y-sintactico/Analizador-Lexico-y-sintactico/src/grammar/Lenguaje.g4 by ANTLR 4.13.2
+// Generated from C:/proyectos/Analizador-Lexico-y-sintactico/Analizador-Lexico-y-sintactico/src/grammar/Lenguaje.g4 by ANTLR 4.13.2
 package generated;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 

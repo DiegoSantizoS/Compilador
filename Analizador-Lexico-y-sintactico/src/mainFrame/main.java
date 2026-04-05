@@ -34,6 +34,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import mainFrame.GeneradorTAC;
+import generador_codigoI.forma_intermedia;
 
 /**
  *
@@ -526,22 +527,25 @@ public class main extends javax.swing.JFrame {
             
             ParseTree tree = parser.programa();
             
-            GeneradorTAC tacVisitor = new GeneradorTAC();
-            tacVisitor.visit(tree);
-            String codigoIntermedio = tacVisitor.getTAC();
+             forma_intermedia ventana = new forma_intermedia();
+ventana.generarYMostrarIR(tree);
+ventana.setVisible(true);
+            //GeneradorTAC tacVisitor = new GeneradorTAC();
+            //tacVisitor.visit(tree);
+            //String codigoIntermedio = tacVisitor.getTAC();
             
-            javax.swing.JTextArea tacArea = new javax.swing.JTextArea(codigoIntermedio);
-            tacArea.setEditable(false); 
-            tacArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 14)); 
-            tacArea.setMargin(new java.awt.Insets(10, 10, 10, 10));
+            //javax.swing.JTextArea tacArea = new javax.swing.JTextArea(codigoIntermedio);
+            //tacArea.setEditable(false); 
+            //tacArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 14)); 
+            //tacArea.setMargin(new java.awt.Insets(10, 10, 10, 10));
             
-            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(tacArea);
-            scrollPane.setPreferredSize(new java.awt.Dimension(500, 400)); 
+            //javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(tacArea);
+            //scrollPane.setPreferredSize(new java.awt.Dimension(500, 400)); 
             
-            JOptionPane.showMessageDialog(this, 
-                scrollPane, 
-                "Generador TAC - Código de 3 Direcciones", 
-                JOptionPane.PLAIN_MESSAGE);
+           // JOptionPane.showMessageDialog(this, 
+             //   scrollPane, 
+               // "Generador TAC - Código de 3 Direcciones", 
+               // JOptionPane.PLAIN_MESSAGE);
 
         } catch(Exception e) {
             JOptionPane.showMessageDialog(this, 
