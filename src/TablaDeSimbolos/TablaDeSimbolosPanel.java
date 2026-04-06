@@ -19,7 +19,7 @@ public class TablaDeSimbolosPanel extends JPanel {
         setLayout(new BorderLayout());
 
         JLabel titulo = new JLabel("Tabla de Símbolos", SwingConstants.CENTER);
-
+        titulo.setPreferredSize(new java.awt.Dimension(0, 35));
         modelo = new DefaultTableModel(
             new Object[]{"No", "Nombre", "Tipo", "Línea"}, 0
         ) {

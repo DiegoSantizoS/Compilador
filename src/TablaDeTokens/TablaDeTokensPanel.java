@@ -19,7 +19,7 @@ public class TablaDeTokensPanel extends JPanel {
         setLayout(new BorderLayout());
 
         JLabel titulo = new JLabel("Tabla de Tokens", SwingConstants.CENTER);
-
+        titulo.setPreferredSize(new java.awt.Dimension(0, 35));
         modelo = new DefaultTableModel(
             new Object[]{"No", "Lexema", "Tipo"}, 0
         ) {

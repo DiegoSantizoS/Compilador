@@ -20,8 +20,9 @@ public class FormaIntermediaPanel extends JPanel {
         setLayout(new BorderLayout());
 
         titulo = new JLabel("Codigo Intermedio", SwingConstants.CENTER);
+        titulo.setPreferredSize(new java.awt.Dimension(0, 35));
         add(titulo, BorderLayout.NORTH);
-
+        
         areaCodigo = new JTextArea();
         areaCodigo.setEditable(false);
 

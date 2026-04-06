@@ -12,8 +12,12 @@ import javax.swing.JTextPane;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import main_components.piccolo.TreeNodeModel;
 
 public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
+
+    private TreeNodeModel raizSemantica;
+    private final Stack<TreeNodeModel> pilaNodos = new Stack<>();
 
     private static class Simbolo {
         String nombre;
@@ -25,6 +29,39 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             this.tipo = tipo;
             this.valor = valor;
         }
+    }
+
+    public TreeNodeModel getArbolSemantico() {
+        return raizSemantica;
+    }
+
+    private TreeNodeModel crearNodo(String texto) {
+        TreeNodeModel nodo = new TreeNodeModel(texto);
+
+        if (pilaNodos.isEmpty()) {
+            raizSemantica = nodo;
+        } else {
+            pilaNodos.peek().addChild(nodo);
+        }
+
+        return nodo;
+    }
+
+    private void entrarNodo(TreeNodeModel nodo) {
+        pilaNodos.push(nodo);
+    }
+
+    private void salirNodo() {
+        if (!pilaNodos.isEmpty()) {
+            pilaNodos.pop();
+        }
+    }
+
+    private TreeNodeModel crearNodoAnotado(String base, String anotacion) {
+        if (anotacion == null || anotacion.isEmpty()) {
+            return crearNodo(base);
+        }
+        return crearNodo(base + " [" + anotacion + "]");
     }
 
     private static class FuncionInfo {
@@ -319,27 +356,49 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
 
     @Override
     public Double visitPrograma(LenguajeParser.ProgramaContext ctx) {
+        raizSemantica = null;
+        pilaNodos.clear();
+
+        TreeNodeModel nodo = crearNodo("Programa");
+        entrarNodo(nodo);
+
         for (LenguajeParser.ElementoContext e : ctx.elemento()) {
             visit(e);
         }
+
+        salirNodo();
         return 0.0;
     }
 
     @Override
     public Double visitElemento(LenguajeParser.ElementoContext ctx) {
-        if (ctx.sentencia() != null) {
-            return visit(ctx.sentencia());
-        }
-        if (ctx.funcion() != null) {
-            return visit(ctx.funcion());
-        }
-        return 0.0;
+        TreeNodeModel nodo = crearNodo("Elemento");
+        entrarNodo(nodo);
+
+        Double result = visitChildren(ctx);
+
+        salirNodo();
+        return result;
     }
 
     @Override
     public Double visitFuncion(LenguajeParser.FuncionContext ctx) {
         String nombre = ctx.ID().getText();
         String tipoRetorno = obtenerTipoDeclarado(ctx.tipo());
+        boolean duplicada = tablaFunciones.containsKey(nombre);
+
+        TreeNodeModel nodo = crearNodoAnotado("Funcion(" + nombre + ")", duplicada ? "ERROR" : tipoRetorno);
+        entrarNodo(nodo);
+
+        if (ctx.parametros() != null) {
+            TreeNodeModel paramsNode = crearNodo("Parametros");
+            entrarNodo(paramsNode);
+            for (LenguajeParser.ParametroContext p : ctx.parametros().parametro()) {
+                String tipo = obtenerTipoDeclarado(p.tipo());
+                crearNodoAnotado("ID(" + p.ID().getText() + ")", tipo);
+            }
+            salirNodo();
+        }
 
         registrarFuncion(nombre, tipoRetorno, ctx.parametros());
 
@@ -368,61 +427,106 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         funcionActual = funcionAnterior;
         tipoRetornoActual = retornoAnterior;
 
+        salirNodo();
         return 0.0;
     }
 
     @Override
     public Double visitLlamadaFuncion(LenguajeParser.LlamadaFuncionContext ctx) {
         String nombre = ctx.ID().getText();
+        boolean existe = tablaFunciones.containsKey(nombre);
+        String anotacion = existe ? tablaFunciones.get(nombre).tipoRetorno : "ERROR";
 
-        if (!tablaFunciones.containsKey(nombre)) {
+        TreeNodeModel nodo = crearNodoAnotado("Llamada(" + nombre + ")", anotacion);
+        entrarNodo(nodo);
+
+        if (!existe) {
             log("Error semántico: función no declarada -> " + nombre);
-            return 0.0;
         }
-
-        FuncionInfo f = tablaFunciones.get(nombre);
 
         List<LenguajeParser.ExpresionContext> args = new ArrayList<>();
         if (ctx.argumentos() != null) {
             args = ctx.argumentos().expresion();
         }
 
-        if (args.size() != f.tiposParametros.size()) {
-            log("Error semántico: cantidad incorrecta de parámetros en -> " + nombre);
-            return 0.0;
-        }
+        if (existe) {
+            FuncionInfo f = tablaFunciones.get(nombre);
 
-        for (int i = 0; i < args.size(); i++) {
-            String recibido = inferirTipo(args.get(i));
-            String esperado = f.tiposParametros.get(i);
-
-            if (!tiposCompatibles(esperado, recibido)) {
-                log("Error semántico: parámetro incompatible en función -> "
-                        + nombre + " (esperado " + esperado + ", recibido " + recibido + ")");
+            if (args.size() != f.tiposParametros.size()) {
+                log("Error semántico: cantidad incorrecta de parámetros en -> " + nombre);
             }
 
-            visit(args.get(i));
+            for (int i = 0; i < args.size(); i++) {
+                String recibido = inferirTipo(args.get(i));
+                String anotArg = recibido;
+
+                if (i < f.tiposParametros.size()) {
+                    String esperado = f.tiposParametros.get(i);
+                    if (!tiposCompatibles(esperado, recibido)) {
+                        anotArg = "ERROR";
+                        log("Error semántico: parámetro incompatible en función -> "
+                                + nombre + " (esperado " + esperado + ", recibido " + recibido + ")");
+                    }
+                } else {
+                    anotArg = "ERROR";
+                }
+
+                TreeNodeModel argNode = crearNodoAnotado("Argumento", anotArg);
+                entrarNodo(argNode);
+                visit(args.get(i));
+                salirNodo();
+            }
+        } else {
+            for (LenguajeParser.ExpresionContext e : args) {
+                TreeNodeModel argNode = crearNodoAnotado("Argumento", inferirTipo(e));
+                entrarNodo(argNode);
+                visit(e);
+                salirNodo();
+            }
         }
 
+        salirNodo();
         return 0.0;
     }
 
     @Override
     public Double visitRetornar(LenguajeParser.RetornarContext ctx) {
+        String anotacion;
+
+        if (tipoRetornoActual == null) {
+            anotacion = "ERROR";
+        } else if ("vacio".equals(tipoRetornoActual) && ctx.e != null) {
+            anotacion = "ERROR";
+        } else if (!"vacio".equals(tipoRetornoActual) && ctx.e == null) {
+            anotacion = "ERROR";
+        } else if (ctx.e != null) {
+            String tipoRetornado = inferirTipo(ctx.e);
+            anotacion = tiposCompatibles(tipoRetornoActual, tipoRetornado) ? tipoRetornado : "ERROR";
+        } else {
+            anotacion = tipoRetornoActual;
+        }
+
+        TreeNodeModel nodo = crearNodoAnotado("Retornar", anotacion);
+        entrarNodo(nodo);
+
         if (tipoRetornoActual == null) {
             log("Error semántico: retornar fuera de una función");
+            salirNodo();
             return 0.0;
         }
 
         if ("vacio".equals(tipoRetornoActual)) {
             if (ctx.e != null) {
                 log("Error semántico: función de tipo vacio no debe retornar valor -> " + funcionActual);
+                visit(ctx.e);
             }
+            salirNodo();
             return 0.0;
         }
 
         if (ctx.e == null) {
             log("Error semántico: la función debe retornar un valor -> " + funcionActual);
+            salirNodo();
             return 0.0;
         }
 
@@ -432,27 +536,47 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
                     + funcionActual + " (" + tipoRetornoActual + " = " + tipoRetornado + ")");
         }
 
-        return visit(ctx.e);
+        Double valor = visit(ctx.e);
+
+        salirNodo();
+        return valor;
     }
 
     @Override
     public Double visitSentencia(LenguajeParser.SentenciaContext ctx) {
-        return visitChildren(ctx);
+        TreeNodeModel nodo = crearNodo("Sentencia");
+        entrarNodo(nodo);
+
+        Double result = visitChildren(ctx);
+
+        salirNodo();
+        return result;
     }
 
     @Override
     public Double visitBloque(LenguajeParser.BloqueContext ctx) {
+        TreeNodeModel nodo = crearNodo("Bloque");
+        entrarNodo(nodo);
+
         entrarAmbito();
         for (LenguajeParser.SentenciaBloqueContext s : ctx.sentenciaBloque()) {
             visit(s);
         }
         salirAmbito();
+
+        salirNodo();
         return 0.0;
     }
 
     @Override
     public Double visitSentenciaBloque(LenguajeParser.SentenciaBloqueContext ctx) {
-        return visitChildren(ctx);
+        TreeNodeModel nodo = crearNodo("SentenciaBloque");
+        entrarNodo(nodo);
+
+        Double result = visitChildren(ctx);
+
+        salirNodo();
+        return result;
     }
 
     @Override
@@ -460,8 +584,26 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         String id = ctx.ID().getText();
         String tipoDeclarado = obtenerTipoDeclarado(ctx.tipo());
 
-        if (existeEnAmbitoActual(id)) {
+        boolean redeclarada = existeEnAmbitoActual(id);
+        String anotacion = tipoDeclarado;
+
+        if (redeclarada) {
+            anotacion = "ERROR";
+        } else if (ctx.e != null) {
+            String tipoExpresion = inferirTipo(ctx.e);
+            if (!tiposCompatibles(tipoDeclarado, tipoExpresion)) {
+                anotacion = "ERROR";
+            }
+        }
+
+        TreeNodeModel nodo = crearNodoAnotado("Declaracion", anotacion);
+        entrarNodo(nodo);
+
+        crearNodoAnotado("ID(" + id + ")", tipoDeclarado);
+
+        if (redeclarada) {
             log("Error semántico: variable ya declarada -> " + id);
+            salirNodo();
             return 0.0;
         }
 
@@ -474,6 +616,8 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
                 log("Error semántico: Asignación de tipos incompatibles -> "
                         + id + " (" + tipoDeclarado + " = " + tipoExpresion + ")");
                 declararVariable(id, tipoDeclarado, 0.0);
+                visit(ctx.e);
+                salirNodo();
                 return 0.0;
             }
 
@@ -481,6 +625,8 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         }
 
         declararVariable(id, tipoDeclarado, valor);
+
+        salirNodo();
         return valor;
     }
 
@@ -489,66 +635,132 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         String id = ctx.ID().getText();
         Simbolo s = buscarSimbolo(id);
 
+        String anotacion;
         if (s == null) {
+            anotacion = "ERROR";
+        } else {
+            String tipoVariable = s.tipo;
+            String tipoExpresion = inferirTipo(ctx.expresion());
+            anotacion = tiposCompatibles(tipoVariable, tipoExpresion) ? tipoVariable : "ERROR";
+        }
+
+        TreeNodeModel nodo = crearNodoAnotado("Asignacion", anotacion);
+        entrarNodo(nodo);
+
+        if (s == null) {
+            crearNodoAnotado("ID(" + id + ")", "no declarado");
             log("Error semántico: variable no declarada -> " + id);
+            if (ctx.expresion() != null) {
+                visit(ctx.expresion());
+            }
+            salirNodo();
             return 0.0;
         }
 
         String tipoVariable = s.tipo;
         String tipoExpresion = inferirTipo(ctx.expresion());
 
+        crearNodoAnotado("ID(" + id + ")", tipoVariable);
+
         if (!tiposCompatibles(tipoVariable, tipoExpresion)) {
             log("Error semántico: Asignación de tipos incompatibles -> "
                     + id + " (" + tipoVariable + " = " + tipoExpresion + ")");
+            visit(ctx.expresion());
+            salirNodo();
             return 0.0;
         }
 
         double valor = visit(ctx.expresion());
         s.valor = valor;
+
+        salirNodo();
         return valor;
     }
 
     @Override
     public Double visitImprimir(LenguajeParser.ImprimirContext ctx) {
-        return visit(ctx.e);
+        String tipo = inferirTipo(ctx.e);
+        TreeNodeModel nodo = crearNodoAnotado("Imprimir", tipo);
+        entrarNodo(nodo);
+
+        Double valor = visit(ctx.e);
+
+        salirNodo();
+        return valor;
     }
 
     @Override
     public Double visitSi(LenguajeParser.SiContext ctx) {
         String tipoCond = inferirTipo(ctx.c);
+        String anotacion = "booleano".equals(tipoCond) ? "booleano" : "ERROR";
+
+        TreeNodeModel nodo = crearNodoAnotado("Si", anotacion);
+        entrarNodo(nodo);
+
+        TreeNodeModel condNode = crearNodoAnotado("Condicion", anotacion);
+        entrarNodo(condNode);
+        double condicion = visit(ctx.c);
         if (!"booleano".equals(tipoCond)) {
             log("Error semántico: la condición de 'si' debe ser booleana");
         }
+        salirNodo();
 
-        double condicion = visit(ctx.c);
+        TreeNodeModel thenNode = crearNodo("Then");
+        entrarNodo(thenNode);
         visit(ctx.b1);
+        salirNodo();
 
         if (ctx.b2 != null) {
+            TreeNodeModel elseNode = crearNodo("Else");
+            entrarNodo(elseNode);
             visit(ctx.b2);
+            salirNodo();
         }
 
+        salirNodo();
         return condicion;
     }
 
     @Override
     public Double visitMientras(LenguajeParser.MientrasContext ctx) {
         String tipoCond = inferirTipo(ctx.c);
+        String anotacion = "booleano".equals(tipoCond) ? "booleano" : "ERROR";
+
+        TreeNodeModel nodo = crearNodoAnotado("Mientras", anotacion);
+        entrarNodo(nodo);
+
+        TreeNodeModel condNode = crearNodoAnotado("Condicion", anotacion);
+        entrarNodo(condNode);
+        double condicion = visit(ctx.c);
         if (!"booleano".equals(tipoCond)) {
             log("Error semántico: la condición de 'mientras' debe ser booleana");
         }
+        salirNodo();
 
-        double condicion = visit(ctx.c);
         visit(ctx.b);
+
+        salirNodo();
         return condicion;
     }
 
     @Override
     public Double visitExpresion(LenguajeParser.ExpresionContext ctx) {
-        return visit(ctx.o);
+        String tipo = inferirTipo(ctx);
+        TreeNodeModel nodo = crearNodoAnotado("Expresion", tipo);
+        entrarNodo(nodo);
+
+        Double result = visit(ctx.o);
+
+        salirNodo();
+        return result;
     }
 
     @Override
     public Double visitOrExpr(LenguajeParser.OrExprContext ctx) {
+        String tipo = inferirTipoOr(ctx);
+        TreeNodeModel nodo = crearNodoAnotado("OrExpr", tipo);
+        entrarNodo(nodo);
+
         double result = visit(ctx.andExpr(0));
 
         for (int i = 1; i < ctx.andExpr().size(); i++) {
@@ -556,11 +768,16 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             result = (result != 0 || right != 0) ? 1.0 : 0.0;
         }
 
+        salirNodo();
         return result;
     }
 
     @Override
     public Double visitAndExpr(LenguajeParser.AndExprContext ctx) {
+        String tipo = inferirTipoAnd(ctx);
+        TreeNodeModel nodo = crearNodoAnotado("AndExpr", tipo);
+        entrarNodo(nodo);
+
         double result = visit(ctx.igualdad(0));
 
         for (int i = 1; i < ctx.igualdad().size(); i++) {
@@ -568,11 +785,16 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             result = (result != 0 && right != 0) ? 1.0 : 0.0;
         }
 
+        salirNodo();
         return result;
     }
 
     @Override
     public Double visitIgualdad(LenguajeParser.IgualdadContext ctx) {
+        String tipo = inferirTipoIgualdad(ctx);
+        TreeNodeModel nodo = crearNodoAnotado("Igualdad", tipo);
+        entrarNodo(nodo);
+
         double result = visit(ctx.comparacion(0));
 
         for (int i = 1; i < ctx.comparacion().size(); i++) {
@@ -585,11 +807,16 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             }
         }
 
+        salirNodo();
         return result;
     }
 
     @Override
     public Double visitComparacion(LenguajeParser.ComparacionContext ctx) {
+        String tipo = inferirTipoComparacion(ctx);
+        TreeNodeModel nodo = crearNodoAnotado("Comparacion", tipo);
+        entrarNodo(nodo);
+
         double result = visit(ctx.suma(0));
 
         for (int i = 1; i < ctx.suma().size(); i++) {
@@ -606,11 +833,16 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             }
         }
 
+        salirNodo();
         return result;
     }
 
     @Override
     public Double visitSuma(LenguajeParser.SumaContext ctx) {
+        String tipo = inferirTipoSuma(ctx);
+        TreeNodeModel nodo = crearNodoAnotado("Suma", "incompatible".equals(tipo) ? "ERROR" : tipo);
+        entrarNodo(nodo);
+
         double result = visit(ctx.mult(0));
 
         for (int i = 1; i < ctx.mult().size(); i++) {
@@ -621,11 +853,42 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             }
         }
 
+        salirNodo();
         return result;
     }
 
     @Override
     public Double visitMult(LenguajeParser.MultContext ctx) {
+        String tipo = inferirTipoMult(ctx);
+        boolean errorDivisionCero = false;
+
+        double resultPreview = 0.0;
+        if (ctx.unario().size() > 1) {
+            // solo para decidir la etiqueta sin mutar nodos después
+            try {
+                double temp = visitPreviewUnario(ctx.unario(0));
+                for (int i = 1; i < ctx.unario().size(); i++) {
+                    double right = visitPreviewUnario(ctx.unario(i));
+                    if (ctx.DIV(i - 1) != null && right == 0) {
+                        errorDivisionCero = true;
+                        break;
+                    }
+                    if (ctx.POR(i - 1) != null) {
+                        temp *= right;
+                    } else if (ctx.DIV(i - 1) != null) {
+                        temp /= right;
+                    }
+                }
+                resultPreview = temp;
+            } catch (Exception e) {
+                resultPreview = 0.0;
+            }
+        }
+
+        String anotacion = ("incompatible".equals(tipo) || errorDivisionCero) ? "ERROR" : tipo;
+        TreeNodeModel nodo = crearNodoAnotado("Mult", anotacion);
+        entrarNodo(nodo);
+
         double result = visit(ctx.unario(0));
 
         for (int i = 1; i < ctx.unario().size(); i++) {
@@ -636,22 +899,23 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             } else if (ctx.DIV(i - 1) != null) {
                 if (right == 0) {
                     log("Error semántico: división entre cero");
+                    salirNodo();
                     return 0.0;
                 }
                 result /= right;
             }
         }
 
+        salirNodo();
         return result;
     }
 
-    @Override
-    public Double visitUnario(LenguajeParser.UnarioContext ctx) {
+    private double visitPreviewUnario(LenguajeParser.UnarioContext ctx) {
         if (ctx.primario() != null) {
-            return visit(ctx.primario());
+            return previewPrimario(ctx.primario());
         }
 
-        double valor = visit(ctx.u);
+        double valor = visitPreviewUnario(ctx.u);
 
         if (ctx.MENOS() != null) {
             return -valor;
@@ -664,29 +928,96 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         return valor;
     }
 
+    private double previewPrimario(LenguajeParser.PrimarioContext ctx) {
+        if (ctx.NUMERO() != null) {
+            return Double.parseDouble(ctx.NUMERO().getText());
+        }
+        if (ctx.VERDADERO() != null) {
+            return 1.0;
+        }
+        if (ctx.FALSO() != null) {
+            return 0.0;
+        }
+        if (ctx.CADENA_LIT() != null) {
+            return 0.0;
+        }
+        if (ctx.ID() != null) {
+            Simbolo s = buscarSimbolo(ctx.ID().getText());
+            return (s != null && s.valor != null) ? s.valor : 0.0;
+        }
+        if (ctx.e != null) {
+            return 0.0;
+        }
+        if (ctx.leer() != null) {
+            return 0.0;
+        }
+        return 0.0;
+    }
+
+    @Override
+    public Double visitUnario(LenguajeParser.UnarioContext ctx) {
+        String tipo = inferirTipoUnario(ctx);
+        String nombre = "Unario";
+
+        if (ctx.NO() != null) {
+            nombre = "Unario(!)";
+        } else if (ctx.MENOS() != null) {
+            nombre = "Unario(-)";
+        }
+
+        TreeNodeModel nodo = crearNodoAnotado(nombre, tipo);
+        entrarNodo(nodo);
+
+        double valor;
+        if (ctx.primario() != null) {
+            valor = visit(ctx.primario());
+        } else {
+            valor = visit(ctx.u);
+
+            if (ctx.MENOS() != null) {
+                valor = -valor;
+            } else if (ctx.NO() != null) {
+                valor = (valor == 0) ? 1.0 : 0.0;
+            }
+        }
+
+        salirNodo();
+        return valor;
+    }
+
     @Override
     public Double visitPrimario(LenguajeParser.PrimarioContext ctx) {
         if (ctx.NUMERO() != null) {
+            String tipo = ctx.NUMERO().getText().contains(".") ? "real" : "entero";
+            crearNodoAnotado("Constante(" + ctx.NUMERO().getText() + ")", tipo);
             return Double.parseDouble(ctx.NUMERO().getText());
         }
 
         if (ctx.VERDADERO() != null) {
+            crearNodoAnotado("Constante(verdadero)", "booleano");
             return 1.0;
         }
 
         if (ctx.FALSO() != null) {
+            crearNodoAnotado("Constante(falso)", "booleano");
             return 0.0;
         }
 
         if (ctx.CADENA_LIT() != null) {
+            crearNodoAnotado("Constante(" + ctx.CADENA_LIT().getText() + ")", "cadena");
             return 0.0;
         }
 
         if (ctx.llamadaFuncion() != null) {
-            return visit(ctx.llamadaFuncion());
+            TreeNodeModel nodo = crearNodoAnotado("Primario", inferirTipoLlamadaFuncion(ctx.llamadaFuncion()));
+            entrarNodo(nodo);
+            Double result = visit(ctx.llamadaFuncion());
+            salirNodo();
+            return result;
         }
 
         if (ctx.leer() != null) {
+            crearNodoAnotado("Leer()", "entero");
             return 0.0;
         }
 
@@ -695,17 +1026,24 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
             Simbolo s = buscarSimbolo(id);
 
             if (s == null) {
+                crearNodoAnotado("ID(" + id + ")", "no declarado");
                 log("Error semántico: variable no definida -> " + id);
                 return 0.0;
             }
 
+            crearNodoAnotado("ID(" + id + ")", s.tipo);
             return s.valor != null ? s.valor : 0.0;
         }
 
         if (ctx.e != null) {
-            return visit(ctx.e);
+            TreeNodeModel nodo = crearNodoAnotado("Primario", inferirTipo(ctx.e));
+            entrarNodo(nodo);
+            Double result = visit(ctx.e);
+            salirNodo();
+            return result;
         }
 
+        crearNodoAnotado("Primario", "desconocido");
         return 0.0;
     }
 }

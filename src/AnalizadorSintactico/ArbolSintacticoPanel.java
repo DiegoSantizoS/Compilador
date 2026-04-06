@@ -2,27 +2,18 @@ package AnalizadorSintactico;
 
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
-import java.awt.BorderLayout;
-import java.util.Arrays;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
-import org.antlr.v4.gui.TreeViewer;
+import main_components.piccolo.ANTLRTreeBuilder;
+import main_components.piccolo.PiccoloTreePanel;
+import main_components.piccolo.TreeNodeModel;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class ArbolSintacticoPanel extends JPanel {
-
-    private final JLabel titulo;
+public class ArbolSintacticoPanel extends PiccoloTreePanel {
 
     public ArbolSintacticoPanel() {
-        setLayout(new BorderLayout());
-
-        titulo = new JLabel("Árbol Sintáctico", SwingConstants.CENTER);
-        add(titulo, BorderLayout.NORTH);
+        super("Árbol Sintáctico");
     }
 
     public void showTreeGui(String codigo) {
@@ -32,17 +23,8 @@ public class ArbolSintacticoPanel extends JPanel {
         LenguajeParser parser = new LenguajeParser(tokens);
 
         ParseTree tree = parser.programa();
+        TreeNodeModel root = ANTLRTreeBuilder.fromParseTree(tree);
 
-        removeAll();
-        setLayout(new BorderLayout());
-        add(titulo, BorderLayout.NORTH);
-
-        TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
-        JScrollPane scrollPane = new JScrollPane(viewer);
-
-        add(scrollPane, BorderLayout.CENTER);
-
-        revalidate();
-        repaint();
+        setTree(root);
     }
 }

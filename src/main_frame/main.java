@@ -2,10 +2,10 @@ package main_frame;
 //@author DFSS
 
 import AnalizadorSemantico.*;
-import AnalizadorSemantico.ArbolSemanticoPanel;
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
@@ -15,18 +15,23 @@ import java.util.Map;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import javax.swing.tree.DefaultTreeCellRenderer;
+import mainFrame.RunButton;
 import main_components.ClosableTabComponent;
 import main_components.TerminalErrorListener;
+import main_components.WindowControlButton;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.fife.ui.rsyntaxtextarea.AbstractTokenMakerFactory;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.Theme;
+import org.fife.ui.rsyntaxtextarea.TokenMakerFactory;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class main extends javax.swing.JFrame {
 
@@ -45,43 +50,97 @@ public class main extends javax.swing.JFrame {
     private java.awt.Point resizeStartScreen;
     private java.awt.Rectangle frameStartBounds;
     private int resizeDirection = RESIZE_NONE;
-
+    
+    //private boolean popupOpen = false;
+    
     private final Map<java.awt.Component, File> tabFiles = new HashMap<>();
     private int nuevoContador = 1;
     private JTextPane terminalUnica;
     
     public main() {
+        getContentPane().setBackground(new Color(41, 49, 52));
+        setBackground(new Color(41, 49, 52));
+        javax.swing.UIManager.put("Panel.background", new Color(41, 49, 52));
+        javax.swing.UIManager.put("control", new Color(41, 49, 52));
+        
         setUndecorated(true);
+        try {
+            javax.swing.UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarkLaf());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+ 
+        javax.swing.UIManager.put("Button.arc", 16);
+        javax.swing.UIManager.put("Component.arc", 16);
+        javax.swing.UIManager.put("TextComponent.arc", 12);
+        javax.swing.UIManager.put("ScrollBar.thumbArc", 999);
+        javax.swing.UIManager.put("ScrollBar.thumbInsets", new java.awt.Insets(2, 2, 2, 2));
+ 
         initComponents();
+        
+        AbstractTokenMakerFactory atmf =
+            (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
+        atmf.putMapping("text/lenguaje", "syntax.LenguajeTokenMaker");
+        
         configurarTabsCerrables();
         crearPopupArchivo();
+        configurarBotonesVentana();
         jSplitPanelVertical.setDividerLocation(1.0);
         jComboBoxGraphicsSelected.removeAllItems();
         jComboBoxGraphicsSelected.addItem("-");
+        actualizarGrafico();
         jComboBoxGraphicsSelected.setEditable(false);
         jComboBoxGraphicsSelected.setEnabled(false);
-        jTextAreaTerminal0.removeAll();
-        jSplitPanelVertical.setEnabled(false);
-        jTextAreaTerminal0.setEnabled(false);
+        jSplitPanelHorizontal.setEnabled(true);
         actualizarGrafico();
-        //inicializarTerminal();
+        if (jTabbedEditorPanel.getTabCount() > 0) {
+            jTabbedEditorPanel.removeTabAt(0);
+        }
+        nuevoArchivo();
+        
+        jTabbedPaneTerminal.setMinimumSize(new Dimension(0,20));
+        jSplitPanelVertical.setDividerSize(4);
+        jSplitPanelVertical.setDividerLocation(0.7);
+        inicializarTerminal();
+        resetApp();
+    }
+    private void configurarBotonesVentana() {
+        estilizarBotonVentana(jButtonMin);
+        estilizarBotonVentana(jButtonMax);
+        estilizarBotonVentana(jButtonClose);
+    }
+    
+    private void estilizarBotonVentana(javax.swing.JButton btn) {
+        btn.setPreferredSize(new java.awt.Dimension(45, 30));
+        btn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        btn.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+        btn.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
+        btn.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        btn.setForeground(java.awt.Color.WHITE);
     }
     
     private void resetApp() {
-        jTextAreaTerminal0.removeAll();
+        if (terminalUnica == null){
+            return;
+        }
+        jTabbedPaneTerminal.setMinimumSize(new Dimension(0,20));
         if (jTabbedPaneTerminal.getTabCount() > 0) {
             jTabbedPaneTerminal.removeAll();
         }
-        jSplitPanelVertical.setEnabled(false);
-        jTextAreaTerminal0.setEnabled(false);
         jSplitPanelVertical.setDividerLocation(1.0);
-        jSplitPanelVertical.setEnabled(false);      
+        //jSplitPanelVertical.setEnabled(false);  
+        jSplitPanelVertical.setDividerSize(0);
         jComboBoxGraphicsSelected.removeAllItems();
         jComboBoxGraphicsSelected.addItem("-");
         jComboBoxGraphicsSelected.setSelectedIndex(0);
         jComboBoxGraphicsSelected.setEnabled(false);
         java.awt.CardLayout cl = (java.awt.CardLayout) jPanelGraphics.getLayout();
         cl.show(jPanelGraphics, "logo_panel");
+        terminalUnica.setText("");
     }
     
     private void actualizarGrafico() {
@@ -128,21 +187,37 @@ public class main extends javax.swing.JFrame {
     }
 
     private JTextPane nuevaTerminal() {
-        if (terminalUnica == null) {
-            inicializarTerminal();
-        }
-
         int editorIndex = jTabbedEditorPanel.getSelectedIndex();
-        String nombreEditor = "Sin archivo";
+        String nombreEditor = (editorIndex != -1)
+                ? jTabbedEditorPanel.getTitleAt(editorIndex)
+                : "Sin archivo";
 
-        if (editorIndex != -1) {
-            nombreEditor = jTabbedEditorPanel.getTitleAt(editorIndex);
+        if (terminalUnica == null) {
+            terminalUnica = new JTextPane();
+            terminalUnica.setEditable(false);
         }
 
-        terminalUnica.setText("");
-        jTabbedPaneTerminal.setTitleAt(0, "Output - " + nombreEditor);
-        jTabbedPaneTerminal.setSelectedIndex(0);
+        JScrollPane scrollPane;
 
+        if (jTabbedPaneTerminal.getTabCount() == 0) {
+            scrollPane = new JScrollPane(terminalUnica);
+            jTabbedPaneTerminal.addTab("Output - " + nombreEditor, scrollPane);
+        } else {
+            java.awt.Component comp = jTabbedPaneTerminal.getComponentAt(0);
+
+            if (comp instanceof JScrollPane) {
+                scrollPane = (JScrollPane) comp;
+                scrollPane.setViewportView(terminalUnica);
+            } else {
+                scrollPane = new JScrollPane(terminalUnica);
+                jTabbedPaneTerminal.setComponentAt(0, scrollPane);
+            }
+
+            jTabbedPaneTerminal.setTitleAt(0, "Output - " + nombreEditor);
+        }
+
+        jTabbedPaneTerminal.setSelectedIndex(0);
+        //terminalUnica.setText(""); 
         return terminalUnica;
     }
     
@@ -164,7 +239,7 @@ public class main extends javax.swing.JFrame {
     }
 
     private void appendNormal(JTextPane terminal, String mensaje) {
-        appendTerminal(terminal, mensaje, Color.BLACK);
+        appendTerminal(terminal, mensaje, Color.WHITE);
     }
 
     private void appendError(JTextPane terminal, String mensaje) {
@@ -212,15 +287,31 @@ public class main extends javax.swing.JFrame {
     }
 
     private void nuevoArchivo() {
-        JTextArea textArea = new JTextArea();
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        RSyntaxTextArea textArea = new RSyntaxTextArea();
+        textArea.setSyntaxEditingStyle("text/lenguaje");
+        textArea.setCodeFoldingEnabled(true);
+        textArea.setAntiAliasingEnabled(true);
+        textArea.setBracketMatchingEnabled(true);
+        textArea.setHighlightCurrentLine(true);
+        textArea.setTabsEmulated(true);
+        textArea.setTabSize(4);
+
+        try {
+            Theme theme = Theme.load(getClass().getResourceAsStream("/main_components/customDarkTheme.xml"));
+            theme.apply(textArea);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        RTextScrollPane scrollPane = new RTextScrollPane(textArea);
+        scrollPane.setLineNumbersEnabled(true);
+        scrollPane.setBorder(javax.swing.BorderFactory.createEmptyBorder());
 
         String titulo = "Nuevo " + nuevoContador++;
         jTabbedEditorPanel.addTab(titulo, scrollPane);
 
         int index = jTabbedEditorPanel.getTabCount() - 1;
         jTabbedEditorPanel.setTabComponentAt(index, new ClosableTabComponent(jTabbedEditorPanel));
-
         jTabbedEditorPanel.setSelectedIndex(index);
     }
 
@@ -237,10 +328,27 @@ public class main extends javax.swing.JFrame {
         try {
             String contenido = Files.readString(file.toPath());
 
-            JTextArea textArea = new JTextArea();
+            RSyntaxTextArea textArea = new RSyntaxTextArea();
+            textArea.setSyntaxEditingStyle("text/lenguaje");
+            textArea.setCodeFoldingEnabled(true);
+            textArea.setAntiAliasingEnabled(true);
+            textArea.setBracketMatchingEnabled(true);
+            textArea.setHighlightCurrentLine(true);
+            textArea.setTabsEmulated(true);
+            textArea.setTabSize(4);
             textArea.setText(contenido);
+            textArea.setCaretPosition(0);
 
-            JScrollPane scrollPane = new JScrollPane(textArea);
+            try {
+                Theme theme = Theme.load(getClass().getResourceAsStream("/main_components/customDarkTheme.xml"));
+                theme.apply(textArea);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            RTextScrollPane scrollPane = new RTextScrollPane(textArea);
+            scrollPane.setLineNumbersEnabled(true);
+            scrollPane.setBorder(javax.swing.BorderFactory.createEmptyBorder());
 
             jTabbedEditorPanel.addTab(file.getName(), scrollPane);
 
@@ -274,7 +382,7 @@ public class main extends javax.swing.JFrame {
             return;
         }
 
-        JTextArea textArea = getTextAreaFromTab(tabActual);
+        RSyntaxTextArea textArea = getTextAreaFromTab(tabActual);
 
         if (textArea == null) {
             return;
@@ -300,7 +408,7 @@ public class main extends javax.swing.JFrame {
             return;
         }
 
-        JTextArea textArea = getTextAreaFromTab(tabActual);
+        RSyntaxTextArea textArea = getTextAreaFromTab(tabActual);
 
         if (textArea == null) {
             return;
@@ -335,17 +443,16 @@ public class main extends javax.swing.JFrame {
         }
     }
 
-    private JTextArea getTextAreaFromTab(java.awt.Component tabComponent) {
-        if (!(tabComponent instanceof JScrollPane scrollPane)) {
-            return null;
+    private RSyntaxTextArea getTextAreaFromTab(java.awt.Component tabComponent) {
+        if (tabComponent instanceof RTextScrollPane rsp) {
+            return (RSyntaxTextArea)rsp.getTextArea();
         }
-
-        java.awt.Component view = scrollPane.getViewport().getView();
-
-        if (view instanceof JTextArea textArea) {
-            return textArea;
+        if (tabComponent instanceof JScrollPane scrollPane) {
+            java.awt.Component view = scrollPane.getViewport().getView();
+            if (view instanceof RSyntaxTextArea textArea) {
+                return textArea;
+            }
         }
-
         return null;
     }
 
@@ -426,17 +533,18 @@ public class main extends javax.swing.JFrame {
         }
     }
 
-    private JTextArea getCurrentEditor() {
+    private RSyntaxTextArea getCurrentEditor() {
         java.awt.Component selected = jTabbedEditorPanel.getSelectedComponent();
 
+        if (selected instanceof RTextScrollPane scrollPane) {
+            return (RSyntaxTextArea) scrollPane.getTextArea();
+        }
         if (selected instanceof JScrollPane scrollPane) {
             java.awt.Component view = scrollPane.getViewport().getView();
-
-            if (view instanceof JTextArea textArea) {
+            if (view instanceof RSyntaxTextArea textArea) {
                 return textArea;
             }
         }
-
         return null;
     }
 
@@ -450,12 +558,11 @@ public class main extends javax.swing.JFrame {
         jPanelEditor = new javax.swing.JPanel();
         jPanelEditorTools = new javax.swing.JPanel();
         jPanelEditorButtons = new javax.swing.JPanel();
-        jButtonRun = new javax.swing.JButton();
+        jButtonRun = new RunButton();
         jPanelEditorToolsFiller = new javax.swing.JPanel();
         jComboBoxGraphicsSelected = new javax.swing.JComboBox<>();
         jTabbedEditorPanel = new javax.swing.JTabbedPane();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
         jPanelGraphics = new javax.swing.JPanel();
         formaIntermediaPane1 = new CodigoIntermedio.FormaIntermediaPanel();
         tacPane1 = new CodigoIntermedio.PanelTAC();
@@ -464,20 +571,25 @@ public class main extends javax.swing.JFrame {
         tablaDeTokensPanel1 = new TablaDeTokens.TablaDeTokensPanel();
         arbolSintacticoPanel1 = new AnalizadorSintactico.ArbolSintacticoPanel();
         jPanelLogo = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
         jTabbedPaneTerminal = new javax.swing.JTabbedPane();
-        jScrollPanelTerminal0 = new javax.swing.JScrollPane();
-        jTextAreaTerminal0 = new javax.swing.JTextArea();
         jPanelTitleBar = new javax.swing.JPanel();
         jPanelMainTabs = new javax.swing.JPanel();
         jButtonLogo = new javax.swing.JButton();
         jButtonFiles = new javax.swing.JButton();
         jPanelDraggingPane = new javax.swing.JPanel();
         jPanelFrameMods = new javax.swing.JPanel();
-        jButtonMin = new javax.swing.JButton();
-        jButtonMax = new javax.swing.JButton();
-        jButtonClose = new javax.swing.JButton();
+        jButtonMin = new WindowControlButton(WindowControlButton.ButtonType.MINIMIZE);
+        jButtonMax = new WindowControlButton(WindowControlButton.ButtonType.RESTORE);
+        jButtonClose = new WindowControlButton(WindowControlButton.ButtonType.CLOSE);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(610, 500));
         addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseDragged(java.awt.event.MouseEvent evt) {
                 formMouseDragged(evt);
@@ -500,8 +612,8 @@ public class main extends javax.swing.JFrame {
         addWindowStateListener(this::formWindowStateChanged);
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
-        jSplitPanelVertical.setDividerLocation(350);
-        jSplitPanelVertical.setDividerSize(3);
+        jSplitPanelVertical.setDividerLocation(355);
+        jSplitPanelVertical.setDividerSize(0);
         jSplitPanelVertical.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         jSplitPanelVertical.setResizeWeight(1.0);
 
@@ -509,7 +621,6 @@ public class main extends javax.swing.JFrame {
         jSplitPanelHorizontal.setDividerSize(3);
         jSplitPanelHorizontal.setMinimumSize(new java.awt.Dimension(604, 200));
 
-        jPanelEditor.setBackground(new java.awt.Color(255, 255, 102));
         jPanelEditor.setMinimumSize(new java.awt.Dimension(300, 35));
         jPanelEditor.setLayout(new java.awt.GridBagLayout());
 
@@ -520,17 +631,16 @@ public class main extends javax.swing.JFrame {
 
         jPanelEditorButtons.setLayout(new java.awt.GridBagLayout());
 
-        jButtonRun.setText("RUN");
+        jButtonRun.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButtonRun.setMaximumSize(new java.awt.Dimension(75, 35));
         jButtonRun.setMinimumSize(new java.awt.Dimension(75, 35));
         jButtonRun.setPreferredSize(new java.awt.Dimension(75, 35));
         jButtonRun.addActionListener(this::jButtonRunActionPerformed);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-        jPanelEditorButtons.add(jButtonRun, gridBagConstraints);
+        jButtonRun.setContentAreaFilled(false);
+        jButtonRun.setBorderPainted(false);
+        jButtonRun.setFocusPainted(false);
+        jButtonRun.setOpaque(false);
+        jPanelEditorButtons.add(jButtonRun, new java.awt.GridBagConstraints());
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
@@ -546,7 +656,7 @@ public class main extends javax.swing.JFrame {
         );
         jPanelEditorToolsFillerLayout.setVerticalGroup(
             jPanelEditorToolsFillerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 35, Short.MAX_VALUE)
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -556,6 +666,8 @@ public class main extends javax.swing.JFrame {
         jPanelEditorTools.add(jPanelEditorToolsFiller, gridBagConstraints);
 
         jComboBoxGraphicsSelected.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "-", "Tabla de Tokens", "Arbol Sintactico", "Tabla de Simbolos", "Arbol Semantico", "Codigo Intermedio", "Codigo TAC" }));
+        jComboBoxGraphicsSelected.setBorder(null);
+        jComboBoxGraphicsSelected.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jComboBoxGraphicsSelected.setMaximumSize(new java.awt.Dimension(150, 22));
         jComboBoxGraphicsSelected.setMinimumSize(new java.awt.Dimension(150, 22));
         jComboBoxGraphicsSelected.setPreferredSize(new java.awt.Dimension(150, 22));
@@ -571,22 +683,24 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weightx = 1.0;
         jPanelEditor.add(jPanelEditorTools, gridBagConstraints);
 
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
-
         jTabbedEditorPanel.addTab("tab1", jScrollPane1);
+
+        jTabbedEditorPanel.setOpaque(false);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 0.95;
+        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
         jPanelEditor.add(jTabbedEditorPanel, gridBagConstraints);
 
         jSplitPanelHorizontal.setLeftComponent(jPanelEditor);
 
         jPanelGraphics.setBackground(new java.awt.Color(51, 255, 51));
+        jPanelGraphics.setMinimumSize(new java.awt.Dimension(450, 550));
+        jPanelGraphics.setOpaque(false);
+        jPanelGraphics.setPreferredSize(new java.awt.Dimension(450, 550));
         jPanelGraphics.setLayout(new java.awt.CardLayout());
         jPanelGraphics.add(formaIntermediaPane1, "intermediate_code");
         jPanelGraphics.add(tacPane1, "tac_code");
@@ -595,16 +709,62 @@ public class main extends javax.swing.JFrame {
         jPanelGraphics.add(tablaDeTokensPanel1, "tokens_table");
         jPanelGraphics.add(arbolSintacticoPanel1, "syntax_tree");
 
-        javax.swing.GroupLayout jPanelLogoLayout = new javax.swing.GroupLayout(jPanelLogo);
-        jPanelLogo.setLayout(jPanelLogoLayout);
-        jPanelLogoLayout.setHorizontalGroup(
-            jPanelLogoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 587, Short.MAX_VALUE)
-        );
-        jPanelLogoLayout.setVerticalGroup(
-            jPanelLogoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 350, Short.MAX_VALUE)
-        );
+        jPanelLogo.setBackground(new java.awt.Color(58, 69, 73));
+        jPanelLogo.setMaximumSize(new java.awt.Dimension(250, 357));
+        jPanelLogo.setMinimumSize(new java.awt.Dimension(250, 357));
+        jPanelLogo.setPreferredSize(new java.awt.Dimension(250, 357));
+        jPanelLogo.setLayout(new java.awt.GridBagLayout());
+
+        jPanel1.setBackground(new java.awt.Color(58, 69, 73));
+        jPanel1.setLayout(new java.awt.GridBagLayout());
+
+        jLabel1.setFont(new java.awt.Font("Lucida Sans", 0, 14)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("DIEGO FERNANDO SANTIZO SAMAYOA 0901-22-15950");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        jPanel1.add(jLabel1, gridBagConstraints);
+
+        jLabel2.setFont(new java.awt.Font("Lucida Sans", 0, 14)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setText("DIEGO FERNANDO SANTIZO SAMAYOA 0901-22-15950");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        jPanel1.add(jLabel2, gridBagConstraints);
+
+        jLabel3.setFont(new java.awt.Font("Lucida Sans", 0, 14)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setText("DIEGO FERNANDO SANTIZO SAMAYOA 0901-22-15950");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        jPanel1.add(jLabel3, gridBagConstraints);
+
+        jLabel4.setFont(new java.awt.Font("Lucida Sans", 0, 14)); // NOI18N
+        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel4.setText("DIEGO FERNANDO SANTIZO SAMAYOA 0901-22-15950");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        jPanel1.add(jLabel4, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        jPanelLogo.add(jPanel1, gridBagConstraints);
+
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/main_components/Escudo_de_la_universidad_Mariano_Gálvez_Guatemala.svg.png"))); // NOI18N
+        jPanelLogo.add(jLabel5, new java.awt.GridBagConstraints());
 
         jPanelGraphics.add(jPanelLogo, "logo_panel");
 
@@ -612,17 +772,10 @@ public class main extends javax.swing.JFrame {
 
         jSplitPanelVertical.setTopComponent(jSplitPanelHorizontal);
 
+        jTabbedPaneTerminal.setForeground(new java.awt.Color(255, 255, 255));
         jTabbedPaneTerminal.setMaximumSize(new java.awt.Dimension(0, 110));
         jTabbedPaneTerminal.setMinimumSize(new java.awt.Dimension(0, 0));
-        jTabbedPaneTerminal.setPreferredSize(new java.awt.Dimension(0, 110));
-
-        jTextAreaTerminal0.setEditable(false);
-        jTextAreaTerminal0.setColumns(20);
-        jTextAreaTerminal0.setRows(5);
-        jScrollPanelTerminal0.setViewportView(jTextAreaTerminal0);
-
-        jTabbedPaneTerminal.addTab("tab1", jScrollPanelTerminal0);
-
+        jTabbedPaneTerminal.setPreferredSize(new java.awt.Dimension(0, 0));
         jSplitPanelVertical.setBottomComponent(jTabbedPaneTerminal);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -630,36 +783,62 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        gridBagConstraints.insets = new java.awt.Insets(0, 3, 3, 3);
         getContentPane().add(jSplitPanelVertical, gridBagConstraints);
 
-        jPanelTitleBar.setBackground(new java.awt.Color(255, 153, 153));
-        jPanelTitleBar.setMaximumSize(new java.awt.Dimension(0, 35));
-        jPanelTitleBar.setMinimumSize(new java.awt.Dimension(0, 35));
-        jPanelTitleBar.setPreferredSize(new java.awt.Dimension(0, 35));
+        jPanelTitleBar.setBackground(new java.awt.Color(30, 36, 38));
+        jPanelTitleBar.setMaximumSize(new java.awt.Dimension(0, 30));
+        jPanelTitleBar.setMinimumSize(new java.awt.Dimension(0, 30));
+        jPanelTitleBar.setPreferredSize(new java.awt.Dimension(0, 30));
         jPanelTitleBar.setLayout(new java.awt.GridBagLayout());
 
-        jPanelMainTabs.setBackground(new java.awt.Color(204, 255, 204));
-        jPanelMainTabs.setMinimumSize(new java.awt.Dimension(150, 0));
-        jPanelMainTabs.setPreferredSize(new java.awt.Dimension(150, 0));
+        jPanelMainTabs.setMinimumSize(new java.awt.Dimension(120, 0));
+        jPanelMainTabs.setPreferredSize(new java.awt.Dimension(120, 0));
         jPanelMainTabs.setLayout(new java.awt.GridBagLayout());
 
-        jButtonLogo.setText("*LOGO*");
+        jButtonLogo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/main_components/java.png"))); // NOI18N
+        jButtonLogo.setBorder(null);
+        jButtonLogo.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButtonLogo.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        jButtonLogo.setMaximumSize(new java.awt.Dimension(50, 35));
-        jButtonLogo.setMinimumSize(new java.awt.Dimension(50, 35));
-        jButtonLogo.setPreferredSize(new java.awt.Dimension(50, 35));
+        jButtonLogo.setMaximumSize(new java.awt.Dimension(35, 35));
+        jButtonLogo.setMinimumSize(new java.awt.Dimension(35, 35));
+        jButtonLogo.setPreferredSize(new java.awt.Dimension(35, 35));
         jButtonLogo.addActionListener(this::jButtonLogoActionPerformed);
+        jButtonLogo.setContentAreaFilled(false);
+        jButtonLogo.setBorderPainted(false);
+        jButtonLogo.setFocusPainted(false);
+        jButtonLogo.setOpaque(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 15);
         jPanelMainTabs.add(jButtonLogo, gridBagConstraints);
 
+        jButtonFiles.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jButtonFiles.setText("Archivos");
-        jButtonFiles.setMaximumSize(new java.awt.Dimension(100, 35));
-        jButtonFiles.setMinimumSize(new java.awt.Dimension(100, 35));
-        jButtonFiles.setPreferredSize(new java.awt.Dimension(100, 35));
+        jButtonFiles.setBorder(null);
+        jButtonFiles.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButtonFiles.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonFiles.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonFiles.setMaximumSize(new java.awt.Dimension(70, 0));
+        jButtonFiles.setMinimumSize(new java.awt.Dimension(70, 0));
+        jButtonFiles.setPreferredSize(new java.awt.Dimension(70, 0));
+        jButtonFiles.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                jButtonFilesMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                jButtonFilesMouseExited(evt);
+            }
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                jButtonFilesMousePressed(evt);
+            }
+        });
         jButtonFiles.addActionListener(this::jButtonFilesActionPerformed);
+        jButtonFiles.setContentAreaFilled(false);
+        jButtonFiles.setBorderPainted(false);
+        jButtonFiles.setFocusPainted(false);
+        jButtonFiles.setOpaque(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weighty = 1.0;
@@ -673,7 +852,6 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelTitleBar.add(jPanelMainTabs, gridBagConstraints);
 
-        jPanelDraggingPane.setBackground(new java.awt.Color(102, 255, 102));
         jPanelDraggingPane.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseDragged(java.awt.event.MouseEvent evt) {
                 jPanelDraggingPaneMouseDragged(evt);
@@ -693,7 +871,7 @@ public class main extends javax.swing.JFrame {
         );
         jPanelDraggingPaneLayout.setVerticalGroup(
             jPanelDraggingPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 35, Short.MAX_VALUE)
+            .addGap(0, 30, Short.MAX_VALUE)
         );
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -705,13 +883,22 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelTitleBar.add(jPanelDraggingPane, gridBagConstraints);
 
-        jPanelFrameMods.setBackground(new java.awt.Color(51, 153, 0));
         jPanelFrameMods.setMaximumSize(new java.awt.Dimension(150, 0));
         jPanelFrameMods.setMinimumSize(new java.awt.Dimension(150, 0));
         jPanelFrameMods.setPreferredSize(new java.awt.Dimension(150, 0));
         jPanelFrameMods.setLayout(new java.awt.GridBagLayout());
 
-        jButtonMin.setText("-");
+        jButtonMin.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        jButtonMin.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonMin.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonMin.setMaximumSize(new java.awt.Dimension(20, 20));
+        jButtonMin.setMinimumSize(new java.awt.Dimension(20, 20));
+        jButtonMin.setOpaque(true);
+        jButtonMin.setPreferredSize(new java.awt.Dimension(20, 20));
+        jButtonMin.setContentAreaFilled(true);
+        jButtonMin.setBorderPainted(true);
+        jButtonMin.setFocusPainted(true);
+        jButtonMin.setOpaque(true);
         jButtonMin.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 jButtonMinMouseEntered(evt);
@@ -727,7 +914,16 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelFrameMods.add(jButtonMin, gridBagConstraints);
 
-        jButtonMax.setText("⬜");
+        jButtonMax.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonMax.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonMax.setMaximumSize(new java.awt.Dimension(20, 20));
+        jButtonMax.setMinimumSize(new java.awt.Dimension(20, 20));
+        jButtonMax.setOpaque(true);
+        jButtonMax.setPreferredSize(new java.awt.Dimension(20, 20));
+        jButtonMax.setContentAreaFilled(false);
+        jButtonMax.setBorderPainted(false);
+        jButtonMax.setFocusPainted(false);
+        jButtonMax.setOpaque(false);
         jButtonMax.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 jButtonMaxMouseEntered(evt);
@@ -743,7 +939,16 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weighty = 1.0;
         jPanelFrameMods.add(jButtonMax, gridBagConstraints);
 
-        jButtonClose.setText("x");
+        jButtonClose.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonClose.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonClose.setMaximumSize(new java.awt.Dimension(20, 20));
+        jButtonClose.setMinimumSize(new java.awt.Dimension(20, 20));
+        jButtonClose.setOpaque(true);
+        jButtonClose.setPreferredSize(new java.awt.Dimension(20, 20));
+        jButtonClose.setContentAreaFilled(false);
+        jButtonClose.setBorderPainted(false);
+        jButtonClose.setFocusPainted(false);
+        jButtonClose.setOpaque(false);
         jButtonClose.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 jButtonCloseMouseEntered(evt);
@@ -771,7 +976,7 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(5, 5, 0, 5);
+        gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 3);
         getContentPane().add(jPanelTitleBar, gridBagConstraints);
 
         pack();
@@ -795,11 +1000,11 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_jPanelDraggingPaneMouseDragged
 
     private void jButtonMinMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonMinMouseEntered
-        jButtonMin.setBackground(Color.BLACK);
+        jButtonMin.setBackground(new Color(255,255,255));
     }//GEN-LAST:event_jButtonMinMouseEntered
 
     private void jButtonMinMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonMinMouseExited
-        jButtonMin.setBackground(Color.WHITE);
+        jButtonMin.setBackground(new Color(0,0,0));
     }//GEN-LAST:event_jButtonMinMouseExited
 
     private void jButtonMinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonMinActionPerformed
@@ -852,6 +1057,10 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_formMouseReleased
 
     private void formMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseDragged
+        if ((getExtendedState() & java.awt.Frame.MAXIMIZED_BOTH) == java.awt.Frame.MAXIMIZED_BOTH) {
+            return;
+        }
+        
         if (resizeDirection == RESIZE_NONE || resizeStartScreen == null || frameStartBounds == null) {
             return;
         }
@@ -904,6 +1113,9 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_formMouseDragged
 
     private void formMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseMoved
+        if ((getExtendedState() & java.awt.Frame.MAXIMIZED_BOTH) == java.awt.Frame.MAXIMIZED_BOTH) {
+            return;
+        }
         int dir = getResizeDirection(evt.getX(), evt.getY());
         setResizeCursor(dir);
     }//GEN-LAST:event_formMouseMoved
@@ -919,11 +1131,14 @@ public class main extends javax.swing.JFrame {
     }//GEN-LAST:event_jComboBoxGraphicsSelectedActionPerformed
 
     private void jButtonRunActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRunActionPerformed
-        inicializarTerminal();
+
+        jTabbedPaneTerminal.setMinimumSize(new Dimension(0,20));
+        if (terminalUnica == null) {
+            inicializarTerminal();
+        }
         
         jSplitPanelVertical.setEnabled(true);
-        jTextAreaTerminal0.setEnabled(true);
-        
+        jSplitPanelVertical.setDividerSize(4);
         if (jComboBoxGraphicsSelected.getItemCount() == 1) {
             jComboBoxGraphicsSelected.addItem("Tabla de Tokens");
             jComboBoxGraphicsSelected.addItem("Arbol Sintactico");
@@ -935,7 +1150,7 @@ public class main extends javax.swing.JFrame {
         }
         jComboBoxGraphicsSelected.setEnabled(true);
         
-        JTextArea editor = getCurrentEditor();
+        RSyntaxTextArea editor = getCurrentEditor();
         if (editor == null) {
             javax.swing.JOptionPane.showMessageDialog(this, "No hay un editor activo.");
             return;
@@ -988,7 +1203,7 @@ public class main extends javax.swing.JFrame {
             tablaSimbolosPanel1.actualizarDesdeCodigo(code);
             tablaDeTokensPanel1.actualizarTabla(code);
             arbolSintacticoPanel1.showTreeGui(code);
-            arbolSemanticoPanel2.showTreeGui(code);
+            arbolSemanticoPanel2.showSemanticTree(code);
             formaIntermediaPane1.generarYMostrarIR(tree);
             tacPane1.showTAC(code);
 
@@ -1009,6 +1224,18 @@ public class main extends javax.swing.JFrame {
             jButtonMax.setText("⬜");
         }
     }//GEN-LAST:event_formWindowStateChanged
+
+    private void jButtonFilesMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonFilesMousePressed
+        
+    }//GEN-LAST:event_jButtonFilesMousePressed
+
+    private void jButtonFilesMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonFilesMouseEntered
+        jButtonFiles.setForeground(new Color(190,190,190));
+    }//GEN-LAST:event_jButtonFilesMouseEntered
+
+    private void jButtonFilesMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonFilesMouseExited
+        jButtonFiles.setForeground(new Color(255,255,255));
+    }//GEN-LAST:event_jButtonFilesMouseExited
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -1043,6 +1270,12 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JButton jButtonMin;
     private javax.swing.JButton jButtonRun;
     private javax.swing.JComboBox<String> jComboBoxGraphicsSelected;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanelDraggingPane;
     private javax.swing.JPanel jPanelEditor;
     private javax.swing.JPanel jPanelEditorButtons;
@@ -1054,13 +1287,10 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanelMainTabs;
     private javax.swing.JPanel jPanelTitleBar;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPanelTerminal0;
     private javax.swing.JSplitPane jSplitPanelHorizontal;
     private javax.swing.JSplitPane jSplitPanelVertical;
     private javax.swing.JTabbedPane jTabbedEditorPanel;
     private javax.swing.JTabbedPane jTabbedPaneTerminal;
-    private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JTextArea jTextAreaTerminal0;
     private TablaDeTokens.TablaDeTokensPanel tablaDeTokensPanel1;
     private TablaDeSimbolos.TablaDeSimbolosPanel tablaSimbolosPanel1;
     private CodigoIntermedio.PanelTAC tacPane1;
