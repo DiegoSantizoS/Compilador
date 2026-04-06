@@ -1,4 +1,4 @@
-package symbols; 
+package TablaDeSimbolos;
 
 public class Simbolo {
     private String nombre;
@@ -13,9 +13,9 @@ public class Simbolo {
 
     @Override
     public String toString() {
-        return String.format("%-15s | %-10s | %d", nombre, tipo, linea);
+        return String.format("%-15s | %-18s | %d", nombre, tipo, linea);
     }
-    
+
     public String getNombre() { return nombre; }
     public String getTipo() { return tipo; }
     public int getLinea() { return linea; }

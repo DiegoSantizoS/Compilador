@@ -17,6 +17,12 @@ public interface LenguajeVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrograma(LenguajeParser.ProgramaContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#elemento}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElemento(LenguajeParser.ElementoContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link LenguajeParser#sentencia}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -47,6 +53,12 @@ public interface LenguajeVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitImprimir(LenguajeParser.ImprimirContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#retornar}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRetornar(LenguajeParser.RetornarContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link LenguajeParser#si}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -70,6 +82,36 @@ public interface LenguajeVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSentenciaBloque(LenguajeParser.SentenciaBloqueContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#funcion}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFuncion(LenguajeParser.FuncionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#parametros}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParametros(LenguajeParser.ParametrosContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#parametro}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParametro(LenguajeParser.ParametroContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#llamadaFuncion}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLlamadaFuncion(LenguajeParser.LlamadaFuncionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link LenguajeParser#argumentos}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArgumentos(LenguajeParser.ArgumentosContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link LenguajeParser#expresion}.
 	 * @param ctx the parse tree

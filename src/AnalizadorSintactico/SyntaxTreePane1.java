@@ -1,5 +1,5 @@
 
-package syntax_tree;
+package AnalizadorSintactico;
 
 import generated.LenguajeLexer;
 import generated.LenguajeParser;

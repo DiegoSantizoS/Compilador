@@ -14,7 +14,8 @@ public class ClosableTabComponent extends JPanel {
         this.tabbedPane = tabbedPane;
 
         setOpaque(false);
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        setLayout(new BorderLayout(5, 0));
+        setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
 
         titleLabel = new JLabel() {
             @Override
@@ -23,6 +24,7 @@ public class ClosableTabComponent extends JPanel {
                 return (index != -1) ? tabbedPane.getTitleAt(index) : "";
             }
         };
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
 
         CloseXButton closeButton = new CloseXButton(() -> {
             int index = tabbedPane.indexOfTabComponent(ClosableTabComponent.this);
@@ -31,8 +33,8 @@ public class ClosableTabComponent extends JPanel {
             }
         });
 
-        add(titleLabel);
-        add(closeButton);
+        add(titleLabel, BorderLayout.CENTER);
+        add(closeButton, BorderLayout.EAST);
     }
 
     static class CloseXButton extends JButton {
@@ -47,6 +49,7 @@ public class ClosableTabComponent extends JPanel {
             setRolloverEnabled(false);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setToolTipText("Close");
+            setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
             addActionListener(e -> onClick.run());
 
@@ -81,7 +84,7 @@ public class ClosableTabComponent extends JPanel {
                 int x2 = w - pad;
                 int y2 = h - pad;
 
-                g2.setColor(Color.BLACK);
+                g2.setColor(hover ? new Color(255, 80, 80) : new Color(255, 80, 80, 150));
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
                 g2.drawLine(x1, y1, x2, y2);

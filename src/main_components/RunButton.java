@@ -1,23 +1,20 @@
-package mainFrame;
+package main_components;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class RunButton extends JButton {
 
-    // ====== TUNE THESE ======
-    private static final int SIZE = 32;                 // button + icon size
-    private static final Color BLUE = new Color(66, 165, 245); // nice UI blue
+    private static final int SIZE = 32;               
+    private static final Color BLUE = new Color(66, 165, 245); 
     private static final Color BLUE_DARK = new Color(30, 136, 229);
 
     public RunButton() {
         super();
         setText(null);
 
-        // Blue arrow icon
         setIcon(new RightArrowIcon(SIZE, BLUE, BLUE_DARK));
 
-        // Look/feel
         setOpaque(false);
         setContentAreaFilled(false);
         setBorderPainted(false);
@@ -25,7 +22,6 @@ public class RunButton extends JButton {
 
         setMargin(new Insets(0, 0, 0, 0));
 
-        // IMPORTANT: match icon size so it doesn't clip
         Dimension d = new Dimension(SIZE, SIZE);
         setPreferredSize(d);
         setMinimumSize(d);
@@ -96,7 +92,6 @@ public class RunButton extends JButton {
         }
 
         private static Color brighten(Color c, float amount) {
-            // amount: 0.0 -> no change, 1.0 -> white
             amount = Math.max(0f, Math.min(1f, amount));
             int r = (int) (c.getRed()   + (255 - c.getRed())   * amount);
             int g = (int) (c.getGreen() + (255 - c.getGreen()) * amount);

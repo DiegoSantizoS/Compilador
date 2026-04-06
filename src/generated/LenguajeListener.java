@@ -18,6 +18,16 @@ public interface LenguajeListener extends ParseTreeListener {
 	 */
 	void exitPrograma(LenguajeParser.ProgramaContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#elemento}.
+	 * @param ctx the parse tree
+	 */
+	void enterElemento(LenguajeParser.ElementoContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#elemento}.
+	 * @param ctx the parse tree
+	 */
+	void exitElemento(LenguajeParser.ElementoContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link LenguajeParser#sentencia}.
 	 * @param ctx the parse tree
 	 */
@@ -68,6 +78,16 @@ public interface LenguajeListener extends ParseTreeListener {
 	 */
 	void exitImprimir(LenguajeParser.ImprimirContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#retornar}.
+	 * @param ctx the parse tree
+	 */
+	void enterRetornar(LenguajeParser.RetornarContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#retornar}.
+	 * @param ctx the parse tree
+	 */
+	void exitRetornar(LenguajeParser.RetornarContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link LenguajeParser#si}.
 	 * @param ctx the parse tree
 	 */
@@ -107,6 +127,56 @@ public interface LenguajeListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSentenciaBloque(LenguajeParser.SentenciaBloqueContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#funcion}.
+	 * @param ctx the parse tree
+	 */
+	void enterFuncion(LenguajeParser.FuncionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#funcion}.
+	 * @param ctx the parse tree
+	 */
+	void exitFuncion(LenguajeParser.FuncionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#parametros}.
+	 * @param ctx the parse tree
+	 */
+	void enterParametros(LenguajeParser.ParametrosContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#parametros}.
+	 * @param ctx the parse tree
+	 */
+	void exitParametros(LenguajeParser.ParametrosContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#parametro}.
+	 * @param ctx the parse tree
+	 */
+	void enterParametro(LenguajeParser.ParametroContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#parametro}.
+	 * @param ctx the parse tree
+	 */
+	void exitParametro(LenguajeParser.ParametroContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#llamadaFuncion}.
+	 * @param ctx the parse tree
+	 */
+	void enterLlamadaFuncion(LenguajeParser.LlamadaFuncionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#llamadaFuncion}.
+	 * @param ctx the parse tree
+	 */
+	void exitLlamadaFuncion(LenguajeParser.LlamadaFuncionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link LenguajeParser#argumentos}.
+	 * @param ctx the parse tree
+	 */
+	void enterArgumentos(LenguajeParser.ArgumentosContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link LenguajeParser#argumentos}.
+	 * @param ctx the parse tree
+	 */
+	void exitArgumentos(LenguajeParser.ArgumentosContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link LenguajeParser#expresion}.
 	 * @param ctx the parse tree

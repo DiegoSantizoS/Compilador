@@ -1,4 +1,4 @@
-package tokens;
+package TablaDeTokens;
 
 import generated.LenguajeLexer;
 import javax.swing.*;
@@ -8,18 +8,18 @@ import java.util.HashSet;
 import java.util.Set;
 import org.antlr.v4.runtime.*;
 
-public class TablaTokenPanel extends JPanel {
+public class TablaDeTokensPanel extends JPanel {
 
     public boolean mostrarSoloNoRepetidos = false;
 
     private final DefaultTableModel modelo;
     private final JTable tabla;
 
-    public TablaTokenPanel() {
+    public TablaDeTokensPanel() {
         setLayout(new BorderLayout());
 
         JLabel titulo = new JLabel("Tabla de Tokens", SwingConstants.CENTER);
-
+        titulo.setPreferredSize(new java.awt.Dimension(0, 35));
         modelo = new DefaultTableModel(
             new Object[]{"No", "Lexema", "Tipo"}, 0
         ) {

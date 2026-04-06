@@ -1,18 +1,12 @@
-package symbols;
+package TablaDeSimbolos;
 
 import generated.LenguajeBaseListener;
-import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class GeneradorTabla extends LenguajeBaseListener {
@@ -31,6 +25,30 @@ public class GeneradorTabla extends LenguajeBaseListener {
         }
     }
 
+    @Override
+    public void enterFuncion(LenguajeParser.FuncionContext ctx) {
+        String tipo = "función " + ctx.tipo().getText();
+        TerminalNode idNode = ctx.ID();
+
+        if (idNode != null) {
+            String nombreFuncion = idNode.getText();
+            int linea = idNode.getSymbol().getLine();
+            tablaDeSimbolos.add(new Simbolo(nombreFuncion, tipo, linea));
+        }
+    }
+
+    @Override
+    public void enterParametro(LenguajeParser.ParametroContext ctx) {
+        String tipo = "parámetro " + ctx.tipo().getText();
+        TerminalNode idNode = ctx.ID();
+
+        if (idNode != null) {
+            String nombreParametro = idNode.getText();
+            int linea = idNode.getSymbol().getLine();
+            tablaDeSimbolos.add(new Simbolo(nombreParametro, tipo, linea));
+        }
+    }
+
     public List<Simbolo> getTablaDeSimbolos() {
         return new ArrayList<>(tablaDeSimbolos);
     }
@@ -45,7 +63,7 @@ public class GeneradorTabla extends LenguajeBaseListener {
 
             printWriter.println("TABLA DE SIMBOLOS GENERADA");
             printWriter.println("==========================================");
-            printWriter.println(String.format("%-15s | %-10s | %s", "NOMBRE", "TIPO", "LINEA"));
+            printWriter.println(String.format("%-15s | %-18s | %s", "NOMBRE", "TIPO", "LINEA"));
             printWriter.println("------------------------------------------");
 
             for (Simbolo s : tablaDeSimbolos) {
