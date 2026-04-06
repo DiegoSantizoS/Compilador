@@ -29,6 +29,7 @@ public class TablaDeTokensPanel extends JPanel {
         java.awt.Font headerFont = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13);
 
         setBackground(PANEL_BG);
+        setFocusable(false);
 
         JLabel titulo = new JLabel("Tabla de Tokens", SwingConstants.CENTER);
         titulo.setPreferredSize(new java.awt.Dimension(0, 35));
@@ -62,6 +63,7 @@ public class TablaDeTokensPanel extends JPanel {
         tabla.getTableHeader().setForeground(TITLE_COLOR);
         tabla.getTableHeader().setOpaque(true);
         tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.setFocusable(false);
 
         JScrollPane scrollPane = new JScrollPane(tabla);
         scrollPane.setBorder(null);

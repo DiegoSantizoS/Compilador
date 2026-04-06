@@ -5,17 +5,29 @@ import AnalizadorSemantico.*;
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -77,6 +89,7 @@ public class main extends javax.swing.JFrame {
         javax.swing.UIManager.put("ScrollBar.thumbInsets", new java.awt.Insets(2, 2, 2, 2));
  
         initComponents();
+        configurarAtajos();
         
         AbstractTokenMakerFactory atmf =
             (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
@@ -103,6 +116,111 @@ public class main extends javax.swing.JFrame {
         jSplitPanelVertical.setDividerLocation(0.7);
         inicializarTerminal();
         resetApp();
+    }
+    
+    private void configurarAtajos() {
+        JRootPane root = getRootPane();
+        InputMap inputMap = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = root.getActionMap();
+
+        inputMap.put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_UP,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK
+            ),
+            "graphicsPrev"
+        );
+        actionMap.put("graphicsPrev", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = jComboBoxGraphicsSelected.getSelectedIndex();
+                if (index > 0) {
+                    jComboBoxGraphicsSelected.setSelectedIndex(index - 1);
+                }
+            }
+        });
+
+        inputMap.put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_DOWN,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK
+            ),
+            "graphicsNext"
+        );
+        actionMap.put("graphicsNext", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = jComboBoxGraphicsSelected.getSelectedIndex();
+                if (index < jComboBoxGraphicsSelected.getItemCount() - 1) {
+                    jComboBoxGraphicsSelected.setSelectedIndex(index + 1);
+                }
+            }
+        });
+
+        inputMap.put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_ENTER,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK
+            ),
+            "runButton"
+        );
+        actionMap.put("runButton", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                jButtonRun.doClick();
+            }
+        });
+
+        inputMap.put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_BACK_SLASH,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK
+            ),
+            "logoButton"
+        );
+        actionMap.put("logoButton", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                jButtonLogo.doClick();
+            }
+        });
+
+        inputMap.put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_QUOTE,
+                InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK
+            ),
+            "focusCurrentEditor"
+        );
+
+        actionMap.put("focusCurrentEditor", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                RSyntaxTextArea editor = getCurrentEditor();
+                if (editor != null) {
+                    editor.requestFocusInWindow();
+                    //editor.setCaretVisible(true);
+                }
+            }
+        });
+    }
+
+    
+    private JTextComponent findTextComponent(Component comp) {
+        if (comp instanceof JTextComponent) {
+            return (JTextComponent) comp;
+        }
+
+        if (comp instanceof Container) {
+            for (Component child : ((Container) comp).getComponents()) {
+                JTextComponent result = findTextComponent(child);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
+        return null;
     }
     private void configurarBotonesVentana() {
         estilizarBotonVentana(jButtonMin);
@@ -178,6 +296,7 @@ public class main extends javax.swing.JFrame {
     private void inicializarTerminal() {
         terminalUnica = new JTextPane();
         terminalUnica.setEditable(false);
+        terminalUnica.setFocusable(false);
 
         JScrollPane scrollPane = new JScrollPane(terminalUnica);
 
@@ -298,6 +417,7 @@ public class main extends javax.swing.JFrame {
         textArea.setBracketMatchingEnabled(true);
         textArea.setHighlightCurrentLine(true);
         textArea.setTabsEmulated(true);
+        
         textArea.setTabSize(4);
 
         try {
@@ -692,6 +812,12 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.weightx = 1.0;
         jPanelEditor.add(jPanelEditorTools, gridBagConstraints);
 
+        jTabbedEditorPanel.setBackground(new java.awt.Color(58, 66, 80));
+        jTabbedEditorPanel.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                jTabbedEditorPanelKeyPressed(evt);
+            }
+        });
         jTabbedEditorPanel.addTab("tab1", jScrollPane1);
 
         jTabbedEditorPanel.setOpaque(false);
@@ -1251,6 +1377,22 @@ public class main extends javax.swing.JFrame {
     private void jButtonFilesMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonFilesMouseExited
         jButtonFiles.setForeground(new Color(255,255,255));
     }//GEN-LAST:event_jButtonFilesMouseExited
+
+    private void jTabbedEditorPanelKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTabbedEditorPanelKeyPressed
+        int index = jComboBoxGraphicsSelected.getSelectedIndex();
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) {
+            if (index < jComboBoxGraphicsSelected.getItemCount() - 1) {
+                jComboBoxGraphicsSelected.setSelectedIndex(index + 1);
+            }
+        }
+
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_UP) {
+            if (index > 0) {
+                jComboBoxGraphicsSelected.setSelectedIndex(index - 1);
+            }
+        }
+    }//GEN-LAST:event_jTabbedEditorPanelKeyPressed
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */

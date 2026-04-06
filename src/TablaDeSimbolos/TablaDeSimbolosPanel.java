@@ -29,7 +29,7 @@ public class TablaDeSimbolosPanel extends JPanel {
         java.awt.Font headerFont = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13);
 
         setBackground(PANEL_BG);
-
+        setFocusable(false);
         JLabel titulo = new JLabel("Tabla de Símbolos", SwingConstants.CENTER);
         titulo.setPreferredSize(new java.awt.Dimension(0, 35));
         titulo.setOpaque(true);
@@ -61,6 +61,7 @@ public class TablaDeSimbolosPanel extends JPanel {
         tabla.getTableHeader().setBackground(HEADER_BG);
         tabla.getTableHeader().setForeground(TITLE_COLOR);
         tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.setFocusable(false);
 
         listener = new GeneradorTabla();
 
