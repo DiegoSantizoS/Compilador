@@ -895,7 +895,6 @@ public class main extends javax.swing.JFrame {
         jPanelFrameMods.setPreferredSize(new java.awt.Dimension(150, 0));
         jPanelFrameMods.setLayout(new java.awt.GridBagLayout());
 
-        jButtonMin.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jButtonMin.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButtonMin.setMargin(new java.awt.Insets(0, 0, 0, 0));
         jButtonMin.setMaximumSize(new java.awt.Dimension(20, 20));
