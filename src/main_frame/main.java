@@ -80,7 +80,7 @@ public class main extends javax.swing.JFrame {
         
         AbstractTokenMakerFactory atmf =
             (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
-        atmf.putMapping("text/lenguaje", "syntax.LenguajeTokenMaker");
+        atmf.putMapping("text/lenguaje", "AnalizadorSintactico.LenguajeTokenMaker");
         
         configurarTabsCerrables();
         crearPopupArchivo();
@@ -241,6 +241,10 @@ public class main extends javax.swing.JFrame {
     private void appendNormal(JTextPane terminal, String mensaje) {
         appendTerminal(terminal, mensaje, Color.WHITE);
     }
+    
+    private void appendNormalSuccess(JTextPane terminal, String mensaje) {
+        appendTerminal(terminal, mensaje, Color.GREEN);
+    }
 
     private void appendError(JTextPane terminal, String mensaje) {
         appendTerminal(terminal, mensaje, Color.RED);
@@ -357,6 +361,7 @@ public class main extends javax.swing.JFrame {
             jTabbedEditorPanel.setSelectedIndex(index);
 
             tabFiles.put(scrollPane, file);
+            
 
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(
@@ -621,6 +626,7 @@ public class main extends javax.swing.JFrame {
         jSplitPanelHorizontal.setDividerSize(3);
         jSplitPanelHorizontal.setMinimumSize(new java.awt.Dimension(604, 200));
 
+        jPanelEditor.setBackground(new java.awt.Color(52, 61, 64));
         jPanelEditor.setMinimumSize(new java.awt.Dimension(300, 35));
         jPanelEditor.setLayout(new java.awt.GridBagLayout());
 
@@ -629,12 +635,13 @@ public class main extends javax.swing.JFrame {
         jPanelEditorTools.setPreferredSize(new java.awt.Dimension(360, 35));
         jPanelEditorTools.setLayout(new java.awt.GridBagLayout());
 
+        jPanelEditorButtons.setBackground(new java.awt.Color(52, 61, 64));
         jPanelEditorButtons.setLayout(new java.awt.GridBagLayout());
 
         jButtonRun.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jButtonRun.setMaximumSize(new java.awt.Dimension(75, 35));
-        jButtonRun.setMinimumSize(new java.awt.Dimension(75, 35));
-        jButtonRun.setPreferredSize(new java.awt.Dimension(75, 35));
+        jButtonRun.setMaximumSize(new java.awt.Dimension(40, 35));
+        jButtonRun.setMinimumSize(new java.awt.Dimension(40, 35));
+        jButtonRun.setPreferredSize(new java.awt.Dimension(40, 35));
         jButtonRun.addActionListener(this::jButtonRunActionPerformed);
         jButtonRun.setContentAreaFilled(false);
         jButtonRun.setBorderPainted(false);
@@ -647,6 +654,8 @@ public class main extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.weighty = 1.0;
         jPanelEditorTools.add(jPanelEditorButtons, gridBagConstraints);
+
+        jPanelEditorToolsFiller.setBackground(new java.awt.Color(52, 61, 64));
 
         javax.swing.GroupLayout jPanelEditorToolsFillerLayout = new javax.swing.GroupLayout(jPanelEditorToolsFiller);
         jPanelEditorToolsFiller.setLayout(jPanelEditorToolsFillerLayout);
@@ -1142,7 +1151,7 @@ public class main extends javax.swing.JFrame {
         if (terminalUnica == null) {
             inicializarTerminal();
         }
-        
+        terminalUnica.setText("");
         jSplitPanelVertical.setEnabled(true);
         jSplitPanelVertical.setDividerSize(4);
         if (jComboBoxGraphicsSelected.getItemCount() == 1) {
@@ -1202,7 +1211,7 @@ public class main extends javax.swing.JFrame {
                 visitor.visit(tree);
 
                 if (visitor.getErrores().isEmpty()) {
-                    appendNormal(terminal, "Ejecución finalizada sin errores.");
+                    appendNormalSuccess(terminal, "Ejecución finalizada sin errores.");
                 }
             }
 

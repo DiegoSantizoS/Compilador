@@ -1,4 +1,4 @@
-package syntax;
+package AnalizadorSintactico;
 
 import javax.swing.text.Segment;
 import org.fife.ui.rsyntaxtextarea.AbstractTokenMaker;

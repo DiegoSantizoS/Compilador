@@ -5,7 +5,7 @@ import java.awt.*;
 
 public class RunButton extends JButton {
 
-    private static final int SIZE = 32;               
+    private static final int SIZE = 26;               
     private static final Color BLUE = new Color(66, 165, 245); 
     private static final Color BLUE_DARK = new Color(30, 136, 229);
 

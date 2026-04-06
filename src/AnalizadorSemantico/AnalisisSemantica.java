@@ -402,30 +402,11 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
 
         registrarFuncion(nombre, tipoRetorno, ctx.parametros());
 
-        String funcionAnterior = funcionActual;
-        String retornoAnterior = tipoRetornoActual;
-
-        funcionActual = nombre;
-        tipoRetornoActual = tipoRetorno;
-
-        entrarAmbito();
-
-        if (ctx.parametros() != null) {
-            for (LenguajeParser.ParametroContext p : ctx.parametros().parametro()) {
-                String tipo = obtenerTipoDeclarado(p.tipo());
-                String id = p.ID().getText();
-                declararVariable(id, tipo, 0.0);
-            }
-        }
-
         for (LenguajeParser.SentenciaBloqueContext s : ctx.sentenciaBloque()) {
-            visit(s);
+            TreeNodeModel cuerpoNode = crearNodo("SentenciaBloque");
+            entrarNodo(cuerpoNode);
+            salirNodo();
         }
-
-        salirAmbito();
-
-        funcionActual = funcionAnterior;
-        tipoRetornoActual = retornoAnterior;
 
         salirNodo();
         return 0.0;

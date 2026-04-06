@@ -2,8 +2,8 @@ package main_components.piccolo;
 
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
-import java.awt.geom.Line2D;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JLabel;
@@ -26,12 +26,26 @@ public class PiccoloTreePanel extends JPanel {
     private static final double PADDING_X = 8;
     private static final double PADDING_Y = 5;
 
+    private static final Color PANEL_BG    = new Color(30, 37, 40);   // #1E2528
+    private static final Color NODE_FILL   = new Color(41, 49, 52);   // #293134
+    private static final Color NODE_BORDER = new Color(74, 90, 96);   // #4A5A60
+    private static final Color TEXT_COLOR  = new Color(231, 238, 241); // #E7EEF1
+    private static final Color LINE_COLOR  = new Color(122, 139, 146); // #7A8B92
+    private static final Color TITLE_COLOR = new Color(221, 230, 234); // #DDE6EA
+
     public PiccoloTreePanel(String textoTitulo) {
         setLayout(new BorderLayout());
+        setBackground(PANEL_BG);
 
         titulo = new JLabel(textoTitulo, SwingConstants.CENTER);
         titulo.setPreferredSize(new java.awt.Dimension(0, 35));
+        titulo.setForeground(TITLE_COLOR);
+        titulo.setBackground(PANEL_BG);
+        titulo.setOpaque(true);
+        titulo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
         canvas = new PCanvas();
+        canvas.setBackground(PANEL_BG);
 
         add(titulo, BorderLayout.NORTH);
         add(canvas, BorderLayout.CENTER);
@@ -87,11 +101,16 @@ public class PiccoloTreePanel extends JPanel {
     ) {
         PText text = new PText(node.getLabel());
         text.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        text.setTextPaint(TEXT_COLOR);
 
         double width = text.getWidth() + (PADDING_X * 2);
         double height = text.getHeight() + (PADDING_Y * 2);
 
         PPath box = PPath.createRectangle(0, 0, width, height);
+        box.setPaint(NODE_FILL);
+        box.setStrokePaint(NODE_BORDER);
+        box.setStroke(new BasicStroke(1.2f));
+
         text.setOffset(PADDING_X, PADDING_Y);
         box.addChild(text);
 
@@ -136,6 +155,7 @@ public class PiccoloTreePanel extends JPanel {
 
             PPath line = PPath.createLine((float) x1, (float) y1, (float) x2, (float) y2);
             line.setStroke(new BasicStroke(1.2f));
+            line.setStrokePaint(LINE_COLOR);
             canvas.getLayer().addChild(line);
 
             drawConnections(child, visuales);
