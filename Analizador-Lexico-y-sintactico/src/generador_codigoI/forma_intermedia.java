@@ -7,7 +7,7 @@ package generador_codigoI;
  */
 import generated.LenguajeLexer;
 import generated.LenguajeParser;
-import java.awt.BorderLayout;
+import java.awt.BorderLayout; 
 import java.awt.Color;
 import java.awt.Font;
 import java.util.Arrays;
