@@ -10,9 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -147,14 +145,12 @@ public class PanelCodigoMaquina extends JPanel {
                 asmFile = tmpDir.resolve("salida.asm");
                 objFile = tmpDir.resolve("salida.obj");
 
-                // If the previous exe is still locked, use a fresh name
-                Path candidate = tmpDir.resolve("salida.exe");
-                try {
-                    Files.deleteIfExists(candidate);
-                    exeFile = candidate;
-                } catch (java.io.IOException ignored) {
-                    exeFile = tmpDir.resolve("salida_" + System.currentTimeMillis() + ".exe");
-                }
+                // Always assign a new salida[N].exe so previous builds are preserved
+                int id = 1;
+                Path candidate;
+                do { candidate = tmpDir.resolve("salida" + id++ + ".exe"); }
+                while (Files.exists(candidate));
+                exeFile = candidate;
 
                 Files.writeString(asmFile, asm);
                 publish(msg("Archivo ASM: " + asmFile, Color.WHITE));
@@ -275,52 +271,32 @@ public class PanelCodigoMaquina extends JPanel {
             return;
         }
 
-        btnEjecutar.setEnabled(false);
-        lblStatus.setText("Ejecutando...");
         emit("", Color.WHITE);
-        emit("--- Salida del programa ---", new Color(200, 200, 100));
+        emit("--- Abriendo en ventana de consola ---", new Color(200, 200, 100));
+        emit("  " + exePath, Color.WHITE);
 
-        new javax.swing.SwingWorker<Integer, Object[]>() {
-            @Override
-            protected Integer doInBackground() throws Exception {
-                ProcessBuilder pb = new ProcessBuilder(exePath.toString());
-                pb.redirectErrorStream(true);
-                Process p = pb.start();
-                try (BufferedReader br = new BufferedReader(
-                        new InputStreamReader(p.getInputStream()))) {
-                    String line;
-                    while ((line = br.readLine()) != null)
-                        publish(new Object[]{line, Color.WHITE});
-                }
-                boolean finished = p.waitFor(30, TimeUnit.SECONDS);
-                if (!finished) {
-                    p.destroyForcibly();
-                    publish(new Object[]{"[Timeout: el proceso excedió 30 s y fue terminado]", Color.RED});
-                    return -1;
-                }
-                return p.exitValue();
-            }
+        try {
+            new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", exePath.toString())
+                .start();
+            lblStatus.setText("Ventana abierta");
+            lblStatus.setForeground(new Color(100, 230, 100));
+            emit("--- Programa ejecutándose en cmd.exe (la ventana queda abierta al terminar) ---",
+                 new Color(100, 230, 100));
+        } catch (IOException ex) {
+            lblStatus.setText("Error al ejecutar");
+            lblStatus.setForeground(new Color(230, 100, 100));
+            emit("[ERROR] " + ex.getMessage(), Color.RED);
+        }
+    }
 
-            @Override
-            protected void process(java.util.List<Object[]> chunks) {
-                for (Object[] pair : chunks) emit((String) pair[0], (Color) pair[1]);
-            }
+    // ── Public execution API ──────────────────────────────────────────────────
 
-            @Override
-            protected void done() {
-                btnEjecutar.setEnabled(true);
-                try {
-                    int code = get();
-                    Color c = code == 0 ? new Color(100, 230, 100) : new Color(230, 100, 100);
-                    emit("--- Programa terminó con código: " + code + " ---", c);
-                    lblStatus.setText(code == 0 ? "Ejecutado OK" : "Terminó con error");
-                    lblStatus.setForeground(c);
-                } catch (Exception ex) {
-                    emit("[ERROR al ejecutar] " + ex.getMessage(), Color.RED);
-                    lblStatus.setText("Error al ejecutar");
-                }
-            }
-        }.execute();
+    public boolean tieneEjecutable() {
+        return exePath != null && java.nio.file.Files.exists(exePath);
+    }
+
+    public void ejecutarExe() {
+        ejecutar();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

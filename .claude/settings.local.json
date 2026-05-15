@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\DFSS\\\\Documents\\\\NetBeansProjects\\\\Compilador\" -Recurse -Name)",
+      "Bash(Sort-Object)",
+      "Bash(findstr /C:\"RULE_leer\" /C:\"LeerContext\" /C:\"tipo\")",
+      "Bash(dir *)",
+      "Bash(java *)"
+    ]
+  }
+}

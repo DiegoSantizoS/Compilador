@@ -702,9 +702,9 @@ primario returns [ValorSemantico info]
     ;
 
 leer returns [ValorSemantico info]
-    : LEER PAR_IZQ PAR_DER
+    : LEER PAR_IZQ t=tipo PAR_DER
       {
-          $info = new ValorSemantico("entero", 0);
+          $info = new ValorSemantico($t.text, null);
       }
     ;
 

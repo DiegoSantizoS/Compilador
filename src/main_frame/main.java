@@ -68,6 +68,11 @@ public class main extends javax.swing.JFrame {
     private final Map<java.awt.Component, File> tabFiles = new HashMap<>();
     private int nuevoContador = 1;
     private JTextPane terminalUnica;
+    private org.antlr.v4.runtime.tree.ParseTree lastCompiledTree = null;
+    private String lastCompiledNombre = null;
+    private javax.swing.JMenuItem itemEjecutar;
+    private CodigoOptimizado.PanelCodigoOptimizado panelCodigoOptimizado1;
+    private CodigoMaquina.PanelCodigoMaquina panelCodigoMaquina1;
     
     public main() {
         getContentPane().setBackground(new Color(41, 49, 52));
@@ -111,6 +116,11 @@ public class main extends javax.swing.JFrame {
         }
         nuevoArchivo();
         
+        panelCodigoOptimizado1 = new CodigoOptimizado.PanelCodigoOptimizado();
+        panelCodigoMaquina1 = new CodigoMaquina.PanelCodigoMaquina();
+        jPanelGraphics.add(panelCodigoOptimizado1, "optimized_code");
+        jPanelGraphics.add(panelCodigoMaquina1, "machine_code");
+
         jTabbedPaneTerminal.setMinimumSize(new Dimension(0,20));
         jSplitPanelVertical.setDividerSize(4);
         jSplitPanelVertical.setDividerLocation(0.7);
@@ -287,6 +297,12 @@ public class main extends javax.swing.JFrame {
             case "Codigo TAC":
                 cl.show(jPanelGraphics, "tac_code");
                 break;
+            case "Codigo Optimizado":
+                cl.show(jPanelGraphics, "optimized_code");
+                break;
+            case "Codigo Maquina":
+                cl.show(jPanelGraphics, "machine_code");
+                break;
             default:
                 cl.show(jPanelGraphics, "logo_panel");
                 break;
@@ -389,11 +405,13 @@ public class main extends javax.swing.JFrame {
         itemAbrir = new javax.swing.JMenuItem("Abrir");
         itemGuardar = new javax.swing.JMenuItem("Guardar");
         itemGuardarComo = new javax.swing.JMenuItem("Guardar Como");
+        itemEjecutar = new javax.swing.JMenuItem("Ejecutar");
 
         estilizarMenuItem(itemNuevo);
         estilizarMenuItem(itemAbrir);
         estilizarMenuItem(itemGuardar);
         estilizarMenuItem(itemGuardarComo);
+        estilizarMenuItem(itemEjecutar);
 
         itemNuevo.addActionListener(e -> nuevoArchivo());
 
@@ -403,10 +421,14 @@ public class main extends javax.swing.JFrame {
 
         itemGuardarComo.addActionListener(e -> guardarArchivoComo());
 
+        itemEjecutar.addActionListener(e -> ejecutarCodigo());
+
         popupFiles.add(itemNuevo);
         popupFiles.add(itemAbrir);
         popupFiles.add(itemGuardar);
         popupFiles.add(itemGuardarComo);
+        popupFiles.add(new javax.swing.JSeparator());
+        popupFiles.add(itemEjecutar);
     }
 
     private void nuevoArchivo() {
@@ -565,6 +587,27 @@ public class main extends javax.swing.JFrame {
                     "Error",
                     javax.swing.JOptionPane.ERROR_MESSAGE
             );
+        }
+    }
+
+    private void ejecutarCodigo() {
+        java.nio.file.Path tmpDir = java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "compilador_umg");
+
+        JFileChooser chooser = new JFileChooser(tmpDir.toFile());
+        chooser.setDialogTitle("Seleccionar ejecutable");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Ejecutables (*.exe)", "exe"));
+
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        File exeFile = chooser.getSelectedFile();
+
+        try {
+            new ProcessBuilder("cmd.exe", "/c", "start", "cmd.exe", "/k", exeFile.getAbsolutePath())
+                .start();
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                "No se pudo abrir cmd.exe:\n" + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1287,6 +1330,8 @@ public class main extends javax.swing.JFrame {
             jComboBoxGraphicsSelected.addItem("Arbol Semantico");
             jComboBoxGraphicsSelected.addItem("Codigo Intermedio");
             jComboBoxGraphicsSelected.addItem("Codigo TAC");
+            jComboBoxGraphicsSelected.addItem("Codigo Optimizado");
+            jComboBoxGraphicsSelected.addItem("Codigo Maquina");
             jComboBoxGraphicsSelected.removeItem("-");
         }
         jComboBoxGraphicsSelected.setEnabled(true);
@@ -1337,6 +1382,8 @@ public class main extends javax.swing.JFrame {
                 visitor.visit(tree);
 
                 if (visitor.getErrores().isEmpty()) {
+                    lastCompiledTree = tree;
+                    lastCompiledNombre = nombreEditor;
                     appendNormalSuccess(terminal, "Ejecución finalizada sin errores.");
                 }
             }
@@ -1347,6 +1394,9 @@ public class main extends javax.swing.JFrame {
             arbolSemanticoPanel2.showSemanticTree(code);
             formaIntermediaPane1.generarYMostrarIR(tree);
             tacPane1.showTAC(code);
+            panelCodigoOptimizado1.showOptimizado(code);
+            panelCodigoMaquina1.setOutputCallback((text, color) -> appendTerminal(terminal, text, color));
+            panelCodigoMaquina1.showASM(panelCodigoOptimizado1.getCodigoOptimizado());
 
         } catch (Exception ex) {
             appendError(terminal, "Error interno: " + ex.getMessage());

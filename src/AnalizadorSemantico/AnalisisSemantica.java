@@ -414,7 +414,7 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         }
 
         if (ctx.leer() != null) {
-            return "entero";
+            return obtenerTipoDeclarado(ctx.leer().tipo());
         }
 
         return "desconocido";
@@ -1155,7 +1155,8 @@ public class AnalisisSemantica extends LenguajeBaseVisitor<Double> {
         }
 
         if (ctx.leer() != null) {
-            crearNodoAnotado("Leer()", "entero");
+            String tipo = obtenerTipoDeclarado(ctx.leer().tipo());
+            crearNodoAnotado("Leer(" + tipo + ")", tipo);
             return 0.0;
         }
 
