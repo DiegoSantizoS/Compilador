@@ -93,6 +93,7 @@ public class GeneradorASM {
         text.add("    extern scanf");
         text.add("    extern fflush");
         text.add("    global main");
+        text.add("    extern system");
         text.add("");
 
         for (int i = 1; i < blocks.size(); i++) {
@@ -107,6 +108,7 @@ public class GeneradorASM {
         data.add("    _fmt_str   db \"%s\", 10, 0");
         data.add("    _fmt_true  db \"verdadero\", 10, 0");
         data.add("    _fmt_false db \"falso\", 10, 0");
+        data.add("    _pause_cmd db \"pause\", 0");
         if (needScanFmt) data.add("    _fmt_scan  db \"%d\", 0");
         for (Map.Entry<String,String> e : strLiterals.entrySet()) {
             data.add("    " + e.getValue() + " db " + nasmString(e.getKey()));
@@ -281,6 +283,9 @@ public class GeneradorASM {
         if (isMain) {
             out.add("    xor rcx, rcx");
             out.add("    call fflush");
+
+            out.add("    lea rcx, [_pause_cmd]");
+            out.add("    call system");
         }
         // Fallthrough epilogue — ensures every function ends with ret even
         // if the TAC had no explicit retornar.
