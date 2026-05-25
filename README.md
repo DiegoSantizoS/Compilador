@@ -8,3 +8,5 @@ Miguel David Contreras Jacinto 0901-21-3878
 Pedro José Gómez Villalobos 0901-23-4868
 
 librerias para el analizar léxico y Sintáctico  seria "ANTLR"
+
+Descargar el archivo .zip, descomprimirlo, y ejecutar Compilador.jar
